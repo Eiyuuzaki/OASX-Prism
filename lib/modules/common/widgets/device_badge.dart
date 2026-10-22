@@ -53,33 +53,45 @@ class _DeviceBadgeState extends State<DeviceBadge> {
 
   Future<void> _refresh() async {
     final config = _activeConfig;
-    if (config.isEmpty) {
-      // 还没选中脚本配置（例如移动端刚进首页）。
-      // 不隐藏徽标——退化为「显示实例、但不可切换」，
-      // 否则用户在移动端完全看不到设备信息。
-      if (!mounted) return;
-      final instances = await ApiClient().getDeviceInstances();
+    try {
+      if (config.isEmpty) {
+        // 还没选中脚本配置（例如移动端刚进首页）。
+        // 不隐藏徽标——退化为「显示实例、但不可切换」，
+        // 否则用户在移动端完全看不到设备信息。
+        if (!mounted) return;
+        final instances = await ApiClient().getDeviceInstances();
+        if (!mounted) return;
+        setState(() {
+          _instances = instances;
+          _current = null;
+          _boundConfig = '';
+          _loading = false;
+        });
+        return;
+      }
+      final api = ApiClient();
+      final results = await Future.wait([
+        api.getDeviceInstances(),
+        api.getCurrentDevice(config),
+      ]);
       if (!mounted) return;
       setState(() {
-        _instances = instances;
+        _instances = results[0] as List<DeviceInstanceModel>;
+        _current = results[1] as CurrentDeviceModel?;
+        _boundConfig = config;
+        _loading = false;
+      });
+    } catch (_) {
+      // 后端没起来 / 网络异常 / 未初始化服务时不应把异常抛到 UI 层。
+      // 静默降级为不显示徽标，等下次进入页面再试。
+      if (!mounted) return;
+      setState(() {
+        _instances = const [];
         _current = null;
         _boundConfig = '';
         _loading = false;
       });
-      return;
     }
-    final api = ApiClient();
-    final results = await Future.wait([
-      api.getDeviceInstances(),
-      api.getCurrentDevice(config),
-    ]);
-    if (!mounted) return;
-    setState(() {
-      _instances = results[0] as List<DeviceInstanceModel>;
-      _current = results[1] as CurrentDeviceModel?;
-      _boundConfig = config;
-      _loading = false;
-    });
   }
 
   Future<void> _switchTo(DeviceInstanceModel instance) async {
