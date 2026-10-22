@@ -14,6 +14,7 @@ import 'package:oasx/service/window_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/check_version.dart';
 import 'package:oasx/utils/platform_utils.dart';
+import 'package:oasx/ui/ui.dart';
 
 class SystemSettingsCard extends StatelessWidget {
   const SystemSettingsCard({super.key});
@@ -168,7 +169,7 @@ class WindowStateSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final windowService = Get.find<WindowService>();
-    return Obx(() => Switch(
+    return Obx(() => AppSwitch(
           value: windowService.enableWindowState.value,
           onChanged: windowService.updateWindowStateEnable,
         ));
@@ -181,7 +182,7 @@ class SystemTraySwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final windowService = Get.find<WindowService>();
-    return Obx(() => Switch(
+    return Obx(() => AppSwitch(
           value: windowService.enableSystemTray.value,
           onChanged: windowService.updateSystemTrayEnable,
         ));
@@ -194,7 +195,7 @@ class StopBackendOnExitSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final windowService = Get.find<WindowService>();
-    return Obx(() => Switch(
+    return Obx(() => AppSwitch(
           value: windowService.stopBackendOnExit.value,
           onChanged: windowService.updateStopBackendOnExit,
         ));
@@ -207,7 +208,7 @@ class LaunchAtStartupSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final autoStartService = Get.find<AutoStartService>();
-    return Obx(() => Switch(
+    return Obx(() => AppSwitch(
           value: autoStartService.enableLaunchAtStartup.value,
           onChanged: autoStartService.isApplying.value
               ? null

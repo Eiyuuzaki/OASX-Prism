@@ -8,6 +8,7 @@ import 'package:oasx/modules/settings/widgets/setting_card.dart';
 import 'package:oasx/modules/settings/widgets/setting_item.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/platform_utils.dart';
+import 'package:oasx/ui/ui.dart';
 
 class OasSettingsCard extends StatelessWidget {
   const OasSettingsCard({super.key});
@@ -75,7 +76,7 @@ class DeploySwitcher extends StatelessWidget {
   Widget build(BuildContext context) {
     final settingsController = Get.find<SettingsController>();
     return Obx(
-      () => Switch(
+      () => AppSwitch(
         value: settingsController.autoDeploy.value,
         onChanged: (nv) => settingsController.updateAutoDeploy(nv),
       ),
@@ -90,7 +91,7 @@ class LoginAfterDeploySwitcher extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<SettingsController>();
     return Obx(
-      () => Switch(
+      () => AppSwitch(
         value: controller.autoLoginAfterDeploy.value,
         onChanged: (nv) => controller.updateAutoLoginAfterDeploy(nv),
       ),

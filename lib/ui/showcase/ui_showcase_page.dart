@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:oasx/modules/common/widgets/appbar.dart';
+import 'package:oasx/modules/settings/widgets/setting_card.dart';
+import 'package:oasx/modules/settings/widgets/setting_item.dart';
 import 'package:oasx/ui/ui.dart';
 
 /// 语义组件预览页。
@@ -108,18 +110,65 @@ class UiShowcasePage extends StatelessWidget {
                   dense: true,
                   onPressed: () {},
                 ),
-                AppButton(
+                const AppButton(
                   label: '禁用',
                   variant: AppButtonVariant.primary,
                   onPressed: null,
                 ),
-                AppButton(
+                const AppButton(
                   label: '禁用描边',
                   variant: AppButtonVariant.outline,
                   onPressed: null,
                 ),
               ],
             ),
+          ),
+          _Section(
+            title: '开关 · ToggleSwitch',
+            subtitle: style == AppUiStyle.fluent
+                ? 'WinUI：40×20 细轨道、14px 小滑钮；关闭态是「透明底 + 1px 描边」'
+                : 'Material：52×32 粗轨道、大滑钮；关闭态是实心灰底',
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 32,
+                  runSpacing: 16,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _SwitchDemo(label: '关闭', initial: false),
+                    _SwitchDemo(label: '开启', initial: true),
+                  ],
+                ),
+                SizedBox(height: 16),
+                Wrap(
+                  spacing: 32,
+                  runSpacing: 16,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _SwitchDemo(label: '带状态文字', initial: true, stateLabel: true),
+                    _SwitchDemo(label: '带状态文字(关)', initial: false, stateLabel: true),
+                  ],
+                ),
+                SizedBox(height: 16),
+                Wrap(
+                  spacing: 32,
+                  runSpacing: 16,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _SwitchDemo(label: '禁用(关)', initial: false, enabled: false),
+                    _SwitchDemo(label: '禁用(开)', initial: true, enabled: false),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          _Section(
+            title: '设置分组 · 真实组件',
+            subtitle: style == AppUiStyle.fluent
+                ? 'WinUI：标题在卡片外、行高 48、行间 1px 细分割线'
+                : 'Material：标题在卡片内、行紧凑、无分割线',
+            child: const _SettingsCardDemo(),
           ),
           _Section(
             title: '卡片 · 三种变体',
@@ -268,6 +317,110 @@ class _Section extends StatelessWidget {
           child,
         ],
       ),
+    );
+  }
+}
+
+/// 设置分组的实景演示。
+///
+/// 刻意复用**真实的** `SettingCard` / `SettingItem`，而不是仿制一份，
+/// 这样预览页看到的就是设置页实际会渲染的样子。
+class _SettingsCardDemo extends StatefulWidget {
+  const _SettingsCardDemo();
+
+  @override
+  State<_SettingsCardDemo> createState() => _SettingsCardDemoState();
+}
+
+class _SettingsCardDemoState extends State<_SettingsCardDemo> {
+  bool _a = true;
+  bool _b = false;
+  bool _c = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 560,
+      child: SettingCard(
+        title: '系统设置',
+        items: [
+          SettingItem(
+            left: const Text('记住窗口位置与大小'),
+            right: AppSwitch(
+              value: _a,
+              onChanged: (v) => setState(() => _a = v),
+            ),
+          ),
+          SettingItem(
+            left: const Text('最小化到系统托盘'),
+            right: AppSwitch(
+              value: _b,
+              onChanged: (v) => setState(() => _b = v),
+            ),
+          ),
+          SettingItem(
+            left: const Text('开机自启动'),
+            right: AppSwitch(
+              value: _c,
+              onChanged: (v) => setState(() => _c = v),
+            ),
+          ),
+          // 可点击行：悬停时整行高亮
+          SettingItem(
+            left: const Text('保存路径（点整行可点击）'),
+            right: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+            onTap: () {},
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 开关演示：带标题的独立状态，便于逐个切换观察。
+class _SwitchDemo extends StatefulWidget {
+  const _SwitchDemo({
+    required this.label,
+    required this.initial,
+    this.enabled = true,
+    this.stateLabel = false,
+  });
+
+  final String label;
+  final bool initial;
+  final bool enabled;
+  final bool stateLabel;
+
+  @override
+  State<_SwitchDemo> createState() => _SwitchDemoState();
+}
+
+class _SwitchDemoState extends State<_SwitchDemo> {
+  late bool _value = widget.initial;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 96,
+          child: Text(
+            widget.label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: FluentPalette.of(context).textTertiary,
+            ),
+          ),
+        ),
+        AppSwitch(
+          value: _value,
+          stateLabel: widget.stateLabel,
+          onChanged: widget.enabled
+              ? (v) => setState(() => _value = v)
+              : null,
+        ),
+      ],
     );
   }
 }

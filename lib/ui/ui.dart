@@ -34,6 +34,7 @@ export 'style.dart';
 // 语义组件
 export 'widgets/app_card.dart';
 export 'widgets/app_button.dart';
+export 'widgets/app_switch.dart';
 
 // 平台实现的设计令牌（业务代码一般不需要直接用，
 // 但自定义组件时需要，所以一并导出）
