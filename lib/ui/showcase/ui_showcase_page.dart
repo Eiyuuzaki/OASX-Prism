@@ -197,6 +197,54 @@ class UiShowcasePage extends StatelessWidget {
             ),
           ),
           _Section(
+            title: '下拉选择 · ComboBox / DropDownButton',
+            subtitle: style == AppUiStyle.fluent
+                ? 'WinUI：控件底 + 1px 描边；菜单项 32px，选中项左侧对勾 + 浅填充'
+                : 'Material：无边框文字按钮；菜单项 48px，选中项右侧对勾',
+            child: const _DropdownDemo(),
+          ),
+          _Section(
+            title: '图标按钮 · IconButton',
+            subtitle: style == AppUiStyle.fluent
+                ? 'WinUI：方形 36×36、圆角 4、悬停整块浅填充、无涟漪'
+                : 'Material：圆形、水波纹',
+            child: Wrap(
+              spacing: 20,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                AppIconButton(
+                  icon: Icons.refresh_rounded,
+                  tooltip: 'subtle',
+                  onPressed: () {},
+                ),
+                AppIconButton(
+                  icon: Icons.download_rounded,
+                  tooltip: 'tonal',
+                  variant: AppIconButtonVariant.tonal,
+                  onPressed: () {},
+                ),
+                AppIconButton(
+                  icon: Icons.tune_rounded,
+                  tooltip: 'outlined',
+                  variant: AppIconButtonVariant.outlined,
+                  onPressed: () {},
+                ),
+                AppIconButton(
+                  icon: Icons.settings_rounded,
+                  tooltip: 'dense',
+                  dense: true,
+                  onPressed: () {},
+                ),
+                AppIconButton(
+                  icon: Icons.delete_rounded,
+                  tooltip: '禁用',
+                  onPressed: null,
+                ),
+              ],
+            ),
+          ),
+          _Section(
             title: '设置分组 · 真实组件',
             subtitle: style == AppUiStyle.fluent
                 ? 'WinUI：标题在卡片外、行高 48、行间 1px 细分割线'
@@ -406,6 +454,64 @@ class _SettingsCardDemoState extends State<_SettingsCardDemo> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 下拉选择演示。
+class _DropdownDemo extends StatefulWidget {
+  const _DropdownDemo();
+
+  @override
+  State<_DropdownDemo> createState() => _DropdownDemoState();
+}
+
+class _DropdownDemoState extends State<_DropdownDemo> {
+  String _day = '2026-10-23';
+  String _metric = '总时长';
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        AppDropdown<String>(
+          icon: Icons.calendar_today_rounded,
+          value: _day,
+          items: const [
+            AppDropdownItem(value: '2026-10-23', label: '2026-10-23'),
+            AppDropdownItem(value: '2026-10-22', label: '2026-10-22'),
+            AppDropdownItem(value: '2026-10-21', label: '2026-10-21'),
+          ],
+          onChanged: (v) => setState(() => _day = v),
+        ),
+        AppDropdown<String>(
+          icon: Icons.bar_chart_rounded,
+          value: _metric,
+          items: const [
+            AppDropdownItem(value: '总时长', label: '总时长'),
+            AppDropdownItem(value: '运行次数', label: '运行次数'),
+            AppDropdownItem(value: '战斗场次', label: '战斗场次'),
+          ],
+          onChanged: (v) => setState(() => _metric = v),
+        ),
+        AppDropdown<String>(
+          icon: Icons.person_outline,
+          value: 'unknown',
+          placeholder: '角色未知',
+          items: const [],
+          onChanged: (_) {},
+        ),
+        AppDropdown<String>(
+          icon: Icons.lock_outline,
+          value: 'x',
+          enabled: false,
+          items: const [AppDropdownItem(value: 'x', label: '禁用态')],
+          onChanged: (_) {},
+        ),
+      ],
     );
   }
 }
