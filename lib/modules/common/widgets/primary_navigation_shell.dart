@@ -9,6 +9,7 @@ import 'package:oasx/modules/home/models/home_workbench_layout.dart';
 import 'package:oasx/modules/settings/index.dart';
 import 'package:oasx/service/acrylic_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 const double kPrimaryNavigationRailWidth = 80;
 
@@ -132,10 +133,12 @@ class _PrimaryNavigationShellState extends State<PrimaryNavigationShell> {
   }
 
   bool _shouldShowRail(double maxWidth) {
-    const twoPaneShellWidth = kHomeWorkbenchMinCollectionWidth +
+    // 用 appNavBarWidth() 而不是固定的 80：Windows 上 Fluent 导航栏是 200，
+    // 沿用 80 会让判定过于乐观，窗口不够宽时挤坏两栏布局
+    final twoPaneShellWidth = kHomeWorkbenchMinCollectionWidth +
         kHomeWorkbenchMinDetailsWidth +
         kHomeWorkbenchDividerWidth +
-        kPrimaryNavigationRailWidth;
+        appNavBarWidth();
     return maxWidth >= twoPaneShellWidth;
   }
 
@@ -220,19 +223,14 @@ class _PrimaryNavigationRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NavigationRail(
+    // 语义导航栏：Windows 上渲染为 WinUI NavigationView
+    // （图标在左、文字在右，选中是左侧竖条指示）
+    return AppNavBar(
       selectedIndex: selectedIndex,
-      onDestinationSelected: onSelected,
-      labelType: NavigationRailLabelType.all,
+      onSelected: onSelected,
       destinations: [
-        NavigationRailDestination(
-          icon: const Icon(Icons.home_rounded),
-          label: Text(I18n.home.tr),
-        ),
-        NavigationRailDestination(
-          icon: const Icon(Icons.settings_rounded),
-          label: Text(I18n.setting.tr),
-        ),
+        AppNavDestination(icon: Icons.home_rounded, label: I18n.home.tr),
+        AppNavDestination(icon: Icons.settings_rounded, label: I18n.setting.tr),
       ],
     );
   }

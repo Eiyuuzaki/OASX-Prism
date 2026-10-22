@@ -164,6 +164,39 @@ class UiShowcasePage extends StatelessWidget {
             ),
           ),
           _Section(
+            title: '输入框 · TextBox',
+            subtitle: style == AppUiStyle.fluent
+                ? 'WinUI：聚焦时底部出现 2px 强调色下划线'
+                : 'Material：圆角填充 + 聚焦描边',
+            child: const _TextFieldDemo(),
+          ),
+          _Section(
+            title: '导航栏 · NavigationView',
+            subtitle: style == AppUiStyle.fluent
+                ? 'WinUI：图标在左、文字在右；选中是左侧 3×16 圆角竖条'
+                : 'Material：图标在上、文字在下；选中是胶囊高亮',
+            child: const _NavBarDemo(),
+          ),
+          _Section(
+            title: '对话框 · ContentDialog',
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                AppButton(
+                  label: '打开对话框',
+                  icon: Icons.open_in_new_rounded,
+                  variant: AppButtonVariant.primary,
+                  onPressed: () => _showDemoDialog(context),
+                ),
+                AppButton(
+                  label: '带输入的对话框',
+                  onPressed: () => _showInputDialog(context),
+                ),
+              ],
+            ),
+          ),
+          _Section(
             title: '设置分组 · 真实组件',
             subtitle: style == AppUiStyle.fluent
                 ? 'WinUI：标题在卡片外、行高 48、行间 1px 细分割线'
@@ -375,6 +408,154 @@ class _SettingsCardDemoState extends State<_SettingsCardDemo> {
       ),
     );
   }
+}
+
+/// 输入框演示：聚焦输入框即可看到 WinUI 的底部强调线。
+class _TextFieldDemo extends StatefulWidget {
+  const _TextFieldDemo();
+
+  @override
+  State<_TextFieldDemo> createState() => _TextFieldDemoState();
+}
+
+class _TextFieldDemoState extends State<_TextFieldDemo> {
+  final _single = TextEditingController();
+  final _multi = TextEditingController();
+
+  @override
+  void dispose() {
+    _single.dispose();
+    _multi.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 420,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppTextField(
+            controller: _single,
+            hintText: '单行输入（点这里聚焦）',
+            prefixIcon: const Icon(Icons.search_rounded, size: 18),
+          ),
+          const SizedBox(height: 16),
+          AppTextField(
+            controller: _multi,
+            hintText: '多行输入',
+            maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+          const AppTextField(
+            hintText: '禁用状态',
+            enabled: false,
+          ),
+          const SizedBox(height: 16),
+          const AppTextField(
+            hintText: '带错误提示',
+            errorText: '这个值不合法',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 导航栏演示：可点击切换选中项，观察指示条移动。
+class _NavBarDemo extends StatefulWidget {
+  const _NavBarDemo();
+
+  @override
+  State<_NavBarDemo> createState() => _NavBarDemoState();
+}
+
+class _NavBarDemoState extends State<_NavBarDemo> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 220,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 160,
+            child: AppNavBar(
+              selectedIndex: _index,
+              onSelected: (i) => setState(() => _index = i),
+              destinations: const [
+                AppNavDestination(icon: Icons.home_rounded, label: '主页'),
+                AppNavDestination(
+                    icon: Icons.settings_rounded, label: '设置'),
+                AppNavDestination(icon: Icons.tune_rounded, label: '参数'),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              '点左侧各项，观察选中指示条（3×16 圆角竖条）与悬停填充。\n'
+              '当前选中：$_index',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 普通对话框演示。
+void _showDemoDialog(BuildContext context) {
+  showAppDialog(
+    context: context,
+    builder: (ctx) => AppDialog(
+      title: const Text('确认操作'),
+      content: const Text(
+        '这是一个语义对话框。在 Windows 上会渲染成 WinUI 的 '
+        'ContentDialog：8px 圆角、烟幕遮罩、右下角按钮。',
+      ),
+      actions: [
+        AppButton(
+          label: '取消',
+          onPressed: () => Navigator.of(ctx).pop(),
+        ),
+        AppButton(
+          label: '确定',
+          variant: AppButtonVariant.primary,
+          onPressed: () => Navigator.of(ctx).pop(),
+        ),
+      ],
+    ),
+  );
+}
+
+/// 带输入框的对话框演示。
+void _showInputDialog(BuildContext context) {
+  showAppDialog(
+    context: context,
+    builder: (ctx) => AppDialog(
+      title: const Text('重命名'),
+      content: const SizedBox(
+        width: 320,
+        child: AppTextField(hintText: '输入新名称'),
+      ),
+      actions: [
+        AppButton(
+          label: '取消',
+          onPressed: () => Navigator.of(ctx).pop(),
+        ),
+        AppButton(
+          label: '保存',
+          variant: AppButtonVariant.primary,
+          onPressed: () => Navigator.of(ctx).pop(),
+        ),
+      ],
+    ),
+  );
 }
 
 /// 开关演示：带标题的独立状态，便于逐个切换观察。

@@ -73,6 +73,13 @@ class FluentPalette {
       ? const Color(0x0AFFFFFF)
       : const Color(0x0A000000);
 
+  /// 错误态描边色。
+  ///
+  /// WinUI 的错误色比 Material 的 `colorScheme.error` 略深，
+  /// 因为 Fluent 的错误信息是"系统级提示"而非强调色。
+  Color get errorBorder =>
+      isDark ? const Color(0xFFFF99A4) : const Color(0xFFC42B1C);
+
   /// 从 Flutter 主题推导一套 Fluent 色板。
   ///
   /// 强调色沿用 App 主题（`colorScheme.primary`），这样品牌色一致；
