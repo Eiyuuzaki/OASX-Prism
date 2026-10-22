@@ -60,6 +60,19 @@ class FluentPalette {
   final Color subtleHover;
   final Color subtlePressed;
 
+  /// 列表行的悬停 / 按下高亮（SubtleFill 系列）。
+  ///
+  /// WinUI 的规范里**按压比悬停更浅**（0.06 → 0.04），
+  /// 不是"越按越深"。这样做是为了避免快速点击时出现
+  /// "浅→深→浅"的明暗反复，那在视觉上就是闪烁。
+  Color get rowHover => isDark
+      ? const Color(0x0FFFFFFF)
+      : const Color(0x0F000000);
+
+  Color get rowPressed => isDark
+      ? const Color(0x0AFFFFFF)
+      : const Color(0x0A000000);
+
   /// 从 Flutter 主题推导一套 Fluent 色板。
   ///
   /// 强调色沿用 App 主题（`colorScheme.primary`），这样品牌色一致；
@@ -189,6 +202,12 @@ class FluentMotion {
 
   /// 悬停/按压反馈时长。
   static const Duration fast = Duration(milliseconds: 100);
+
+  /// 悬停反馈时长。
+  ///
+  /// 比 [fast] 更短：交互反馈要"跟手"，100ms 在快速划过时
+  /// 会感觉颜色追不上指针，读起来像卡顿。
+  static const Duration hoverIn = Duration(milliseconds: 70);
 
   /// 展开/收起。
   static const Duration normal = Duration(milliseconds: 200);

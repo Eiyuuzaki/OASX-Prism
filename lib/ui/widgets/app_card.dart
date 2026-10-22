@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:oasx/ui/impl/fluent/fluent_tokens.dart';
 import 'package:oasx/ui/style.dart';
 
 /// 语义化卡片：跨平台统一入口。
@@ -60,8 +61,18 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final radius = borderRadius ?? AppRadius.mediumRadius;
+    final style = resolveAppUiStyle();
+
+    // 圆角按平台取：Fluent 比 M3 更"方"（卡片 8 vs 12）
+    final radius = borderRadius ??
+        (style == AppUiStyle.fluent
+            ? FluentRadius.cardRadius
+            : AppRadius.mediumRadius);
     final shape = RoundedRectangleBorder(borderRadius: radius);
+
+    if (style == AppUiStyle.fluent) {
+      return _buildFluent(context, radius, shape);
+    }
 
     final content = padding == null
         ? child
@@ -100,6 +111,109 @@ class AppCard extends StatelessWidget {
             child: tappable,
           ),
       },
+    );
+  }
+
+  /// Windows 实现：WinUI 的卡片用「卡片底色 + 1px 细描边」表达层级，不用阴影。
+  ///
+  /// 三种变体在 Fluent 下的差异比 M3 小（WinUI 本身就不靠色调区分层级）：
+  /// - elevated：卡片底 + 描边（WinUI 的"Layer"卡片）
+  /// - filled：比页面底略亮的层，无描边
+  /// - outlined：页面底（透明）+ 描边
+  Widget _buildFluent(
+    BuildContext context,
+    BorderRadius radius,
+    RoundedRectangleBorder shape,
+  ) {
+    final p = FluentPalette.of(context);
+
+    final (Color bg, Color border) = switch (variant) {
+      AppCardVariant.elevated => (p.card, p.stroke),
+      AppCardVariant.filled => (p.card, Colors.transparent),
+      AppCardVariant.outlined => (Colors.transparent, p.stroke),
+    };
+
+    Widget content = padding == null
+        ? child
+        : Padding(padding: padding!, child: child);
+
+    if (onTap != null) {
+      // Fluent 不用涟漪：整块底色过渡
+      content = _FluentCardTap(
+        radius: radius,
+        onTap: onTap!,
+        child: content,
+      );
+    }
+
+    return Padding(
+      padding: margin,
+      child: AnimatedContainer(
+        duration: FluentMotion.fast,
+        curve: FluentMotion.standard,
+        decoration: BoxDecoration(
+          color: onTap == null ? bg : Colors.transparent,
+          borderRadius: radius,
+          border: Border.all(color: border, width: 1),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: content,
+      ),
+    );
+  }
+}
+
+/// 可点击 Fluent 卡片的表面：悬停/按下整块变色，无涟漪。
+class _FluentCardTap extends StatefulWidget {
+  const _FluentCardTap({
+    required this.child,
+    required this.radius,
+    required this.onTap,
+  });
+
+  final Widget child;
+  final BorderRadius radius;
+  final VoidCallback onTap;
+
+  @override
+  State<_FluentCardTap> createState() => _FluentCardTapState();
+}
+
+class _FluentCardTapState extends State<_FluentCardTap> {
+  bool _hovering = false;
+  bool _pressing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = FluentPalette.of(context);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() {
+        _hovering = false;
+        _pressing = false;
+      }),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _pressing = true),
+        onTapUp: (_) => setState(() => _pressing = false),
+        onTapCancel: () => setState(() => _pressing = false),
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          // decelerate 而非 standard：反馈要立即响应，
+          // easeInOut 的开头延迟会让悬停显得"卡一下才亮"
+          duration: FluentMotion.hoverIn,
+          curve: FluentMotion.decelerate,
+          decoration: BoxDecoration(
+            // WinUI 的按压比悬停更浅，避免明暗反复造成闪烁
+            color: _pressing
+                ? p.rowPressed
+                : (_hovering ? p.rowHover : Colors.transparent),
+            borderRadius: widget.radius,
+          ),
+          child: widget.child,
+        ),
+      ),
     );
   }
 }

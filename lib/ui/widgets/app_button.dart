@@ -278,6 +278,7 @@ class _FluentButtonSurfaceState extends State<_FluentButtonSurface> {
               })
           : null,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTapDown:
             widget.enabled ? (_) => setState(() => _pressing = true) : null,
         onTapUp: widget.enabled
@@ -287,8 +288,10 @@ class _FluentButtonSurfaceState extends State<_FluentButtonSurface> {
             widget.enabled ? () => setState(() => _pressing = false) : null,
         onTap: widget.onPressed,
         child: AnimatedContainer(
-          duration: FluentMotion.fast,
-          curve: FluentMotion.standard,
+          // decelerate 而非 standard：悬停反馈要立即响应，
+          // easeInOut 的开头延迟会让按钮显得"卡一下才亮"
+          duration: FluentMotion.hoverIn,
+          curve: FluentMotion.decelerate,
           constraints: BoxConstraints(minHeight: widget.minHeight),
           padding: EdgeInsets.symmetric(horizontal: widget.horizontalPadding),
           decoration: BoxDecoration(
