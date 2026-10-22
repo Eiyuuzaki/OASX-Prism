@@ -218,15 +218,12 @@ class _StatsToolbar extends StatelessWidget {
                 Flexible(
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: _MenuSelect<String>(
+                    child: AppDropdown<String>(
                       icon: Icons.calendar_today_rounded,
-                      label: formatStatisticsDayLabel(
-                        controller.selectedDateKey.value,
-                      ),
                       value: controller.selectedDateKey.value,
-                      options: [
+                      items: [
                         for (final dateKey in availableDateKeys)
-                          _MenuOption(
+                          AppDropdownItem(
                             value: dateKey,
                             label: formatStatisticsDayLabel(dateKey),
                           ),
@@ -259,27 +256,26 @@ class _StatsToolbar extends StatelessWidget {
               runSpacing: 4,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                _MenuSelect<ScriptStatisticsChartMetric>(
+                AppDropdown<ScriptStatisticsChartMetric>(
                   icon: Icons.bar_chart_rounded,
-                  label: _metricLabel(controller.historyMetric.value),
                   value: controller.historyMetric.value,
-                  options: [
+                  items: [
                     for (final metric in ScriptStatisticsChartMetric.values)
-                      _MenuOption(value: metric, label: _metricLabel(metric)),
+                      AppDropdownItem(
+                          value: metric, label: _metricLabel(metric)),
                   ],
                   onChanged: controller.selectHistoryMetric,
                 ),
-                _MenuSelect<ScriptStatisticsChartSortField>(
+                AppDropdown<ScriptStatisticsChartSortField>(
                   icon: Icons.sort_rounded,
-                  label: _sortFieldLabel(controller.historySortField.value),
                   value: controller.historySortField.value,
-                  options: [
-                    _MenuOption(
+                  items: [
+                    AppDropdownItem(
                       value: ScriptStatisticsChartSortField.data,
                       label: I18n.homeStatsSortByData.tr,
                     ),
                     if (canSortByTime)
-                      _MenuOption(
+                      AppDropdownItem(
                         value: ScriptStatisticsChartSortField.time,
                         label: I18n.homeStatsSortByTime.tr,
                       ),
@@ -305,14 +301,6 @@ class _StatsToolbar extends StatelessWidget {
         I18n.homeStatsMetricBattleAvgDuration.tr,
       ScriptStatisticsChartMetric.avgRunDuration =>
         I18n.homeStatsMetricAvgRunDuration.tr,
-    };
-  }
-
-  /// 排序字段下拉的文案。
-  String _sortFieldLabel(ScriptStatisticsChartSortField field) {
-    return switch (field) {
-      ScriptStatisticsChartSortField.data => I18n.homeStatsSortByData.tr,
-      ScriptStatisticsChartSortField.time => I18n.homeStatsSortByTime.tr,
     };
   }
 }
@@ -393,78 +381,6 @@ class _StatusIndicator extends StatelessWidget {
       return scheme.primary;
     }
     return scheme.onSurfaceVariant;
-  }
-}
-
-/// 菜单里的一项。
-class _MenuOption<T> {
-  const _MenuOption({required this.value, required this.label});
-
-  final T value;
-  final String label;
-}
-
-/// 基于 `MenuAnchor` 的下拉选择（Material 标准交互）。
-class _MenuSelect<T> extends StatelessWidget {
-  const _MenuSelect({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final IconData icon;
-  final String label;
-  final T value;
-  final List<_MenuOption<T>> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    if (options.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    final scheme = Theme.of(context).colorScheme;
-    return MenuAnchor(
-      menuChildren: [
-        for (final option in options)
-          MenuItemButton(
-            onPressed: () => onChanged(option.value),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(option.label, overflow: TextOverflow.ellipsis),
-                ),
-                if (option.value == value) ...[
-                  const SizedBox(width: 8),
-                  Icon(Icons.check_rounded, size: 18, color: scheme.primary),
-                ],
-              ],
-            ),
-          ),
-      ],
-      builder: (context, menu, _) {
-        return TextButton.icon(
-          onPressed: () => menu.isOpen ? menu.close() : menu.open(),
-          icon: Icon(icon, size: 18),
-          label: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 120),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const Icon(Icons.arrow_drop_down_rounded, size: 18),
-            ],
-          ),
-        );
-      },
-    );
   }
 }
 

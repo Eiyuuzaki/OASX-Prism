@@ -13,6 +13,7 @@ import 'package:oasx/api/api_client.dart';
 import 'package:oasx/modules/common/widgets/frosted_bars.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
+import 'package:oasx/ui/ui.dart';
 
 part './icon_registry.dart';
 part './resource_controller.dart';
@@ -150,8 +151,9 @@ class _StatusChip extends StatelessWidget {
 
 /// 角色下拉：多账号时用来切换查看对象。
 ///
-/// M3：胶囊形下拉按钮（MenuAnchor），带下拉箭头、悬停 tonal 底、
-/// 点开为标准菜单；替代旧的无边框 DropdownButton。
+/// 角色选择：语义下拉（Windows 上渲染为 WinUI ComboBox）。
+///
+/// 单角色时禁用——切换入口保留（不能凭空消失），但点不开。
 class _RoleSelector extends StatelessWidget {
   const _RoleSelector({required this.controller});
 
@@ -159,90 +161,28 @@ class _RoleSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final roles = controller.roles;
     final current = controller.selectedRoleKey.value;
     final exists = roles.any((r) => r.roleKey == current);
-    // 单角色且无服务器名可省略时也保留按钮（切换入口不能消失），
-    // 但禁用箭头提示单选项
     final single = roles.length <= 1 && exists;
 
     return Align(
       alignment: Alignment.centerLeft,
-      child: MenuAnchor(
-        alignmentOffset: const Offset(0, 4),
-        menuChildren: roles.isEmpty
-            ? [
-                MenuItemButton(
-                  onPressed: null,
-                  child: Text(I18n.resource_role_unknown.tr),
-                ),
-              ]
-            : [
-                for (final r in roles)
-                  MenuItemButton(
-                    leadingIcon: r.roleKey == current
-                        ? Icon(Icons.check_rounded,
-                            size: 18, color: scheme.primary)
-                        : null,
-                    onPressed: () => controller.changeRole(r.roleKey),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 320),
-                      child: Text(
-                        r.displayLabel,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-              ],
-        builder: (context, menu, _) {
-          return TextButton.icon(
-            style: TextButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              shape: const StadiumBorder(),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-            onPressed:
-                single ? null : () => menu.isOpen ? menu.close() : menu.open(),
-            icon: Icon(Icons.person_outline,
-                size: 18, color: scheme.primary),
-            label: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ConstrainedBox(
-                  // displayLabel 可能很长（名字+等级+服务器），限宽省略
-                  constraints: const BoxConstraints(maxWidth: 320),
-                  child: Text(
-                    current.isEmpty || !exists
-                        ? I18n.resource_role_unknown.tr
-                        : _shortLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 2),
-                Icon(Icons.arrow_drop_down_rounded,
-                    size: 18, color: scheme.onSurfaceVariant),
-              ],
-            ),
-          );
-        },
+      child: AppDropdown<String>(
+        icon: Icons.person_outline,
+        maxWidth: 320,
+        enabled: !single,
+        value: current,
+        // 没有匹配项时（角色未知）也要显示点东西
+        placeholder:
+            current.isEmpty || !exists ? I18n.resource_role_unknown.tr : null,
+        items: [
+          for (final r in roles)
+            AppDropdownItem(value: r.roleKey, label: r.displayLabel),
+        ],
+        onChanged: controller.changeRole,
       ),
     );
-  }
-
-  /// 收起状态的角色显示名：名字 + 等级，不含服务器与完整 role_key
-  String get _shortLabel {
-    final matched = controller.roles
-        .where((r) => r.roleKey == controller.selectedRoleKey.value)
-        .toList();
-    if (matched.isEmpty) return controller.selectedRoleKey.value;
-    return matched.first.shortLabel;
   }
 }
 
@@ -285,19 +225,12 @@ class _Empty extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            // Filled Button：胶囊、primary 底、自带 ripple 与按压/禁用态
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
+            AppButton(
+              variant: AppButtonVariant.primary,
+              icon: Icons.download_rounded,
+              label: I18n.resource_collect_now.tr,
               onPressed:
                   controller.collecting.value ? null : controller.collectNow,
-              icon: const Icon(Icons.download_rounded, size: 18),
-              label: Text(I18n.resource_collect_now.tr),
             ),
           ],
         ),

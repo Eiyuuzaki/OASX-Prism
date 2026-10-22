@@ -34,9 +34,10 @@ class ResourceHistoryDialog extends StatelessWidget {
                     Expanded(
                       child: Text(title, style: theme.textTheme.titleMedium),
                     ),
-                    IconButton(
+                    AppIconButton(
                       onPressed: () => Get.back(),
-                      icon: const Icon(Icons.close_rounded, size: 20),
+                      icon: Icons.close_rounded,
+                      iconSize: 20,
                       tooltip: I18n.resource_close.tr,
                     ),
                   ]),

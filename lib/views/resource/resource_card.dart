@@ -129,19 +129,15 @@ class ResourceCard extends StatelessWidget {
   /// 图钉按钮：置顶后填充显示，未置顶时半透明描边
   Widget _pinButton(BuildContext context) {
     final theme = Theme.of(context);
-    return IconButton(
+    return AppIconButton(
       onPressed: onTogglePin,
-      visualDensity: VisualDensity.compact,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(width: 26, height: 26),
+      dense: true,
+      iconSize: 15,
       tooltip: pinned ? '取消置顶' : '置顶',
-      icon: Icon(
-        pinned ? Icons.push_pin : Icons.push_pin_outlined,
-        size: 15,
-        color: pinned
-            ? theme.colorScheme.primary
-            : theme.disabledColor.withValues(alpha: 0.6),
-      ),
+      icon: pinned ? Icons.push_pin : Icons.push_pin_outlined,
+      color: pinned
+          ? theme.colorScheme.primary
+          : theme.disabledColor.withValues(alpha: 0.6),
     );
   }
 

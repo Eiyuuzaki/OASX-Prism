@@ -37,9 +37,15 @@ class _Toolbar extends StatelessWidget {
           Row(
             children: [
               Flexible(
-                child: _DateDropdown(
-                  dates: dates,
-                  current: current,
+                child: AppDropdown<String>(
+                  icon: Icons.calendar_today_rounded,
+                  dense: true,
+                  maxWidth: 100,
+                  value: current,
+                  items: [
+                    for (final d in dates)
+                      AppDropdownItem(value: d, label: d),
+                  ],
                   onChanged: controller.changeDate,
                 ),
               ),
@@ -63,25 +69,28 @@ class _Toolbar extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // 采集：进行中转圈、平时标准图标（M3 默认圆形 hover/按压底色）
-              IconButton(
+              // 采集：进行中转圈、平时标准图标
+              AppIconButton(
                 tooltip: I18n.resource_collect_now.tr,
                 onPressed: controller.collecting.value
                     ? null
                     : controller.collectNow,
-                icon: controller.collecting.value
+                icon: Icons.download_rounded,
+                iconSize: 20,
+                child: controller.collecting.value
                     ? const SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.download_rounded, size: 20),
+                    : null,
               ),
               const SizedBox(width: 4),
-              IconButton(
+              AppIconButton(
                 tooltip: I18n.resource_refresh.tr,
                 onPressed:
                     controller.loading.value ? null : controller.reload,
-                icon: const Icon(Icons.refresh_rounded, size: 20),
+                icon: Icons.refresh_rounded,
+                iconSize: 20,
               ),
             ],
           ),
@@ -91,68 +100,3 @@ class _Toolbar extends StatelessWidget {
   }
 }
 
-/// 日期下拉（MenuAnchor + 胶囊按钮）。
-class _DateDropdown extends StatelessWidget {
-  const _DateDropdown({
-    required this.dates,
-    required this.current,
-    required this.onChanged,
-  });
-
-  final List<String> dates;
-  final String current;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    if (dates.isEmpty) {
-      return Text(current, style: theme.textTheme.bodyMedium);
-    }
-    return MenuAnchor(
-      alignmentOffset: const Offset(0, 4),
-      menuChildren: [
-        for (final d in dates)
-          MenuItemButton(
-            leadingIcon: d == current
-                ? Icon(Icons.check_rounded,
-                    size: 18, color: theme.colorScheme.primary)
-                : null,
-            onPressed: () => onChanged(d),
-            child: Text(d),
-          ),
-      ],
-      builder: (context, menu, _) {
-        // 胶囊按钮：tonal 底 + 日历图标 + 箭头，InkWell 自带水波纹
-        return TextButton.icon(
-          style: TextButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            shape: const StadiumBorder(),
-            backgroundColor: theme.colorScheme.surfaceContainerHigh,
-            foregroundColor: theme.colorScheme.onSurface,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-          onPressed: () => menu.isOpen ? menu.close() : menu.open(),
-          icon: Icon(Icons.calendar_today_rounded,
-              size: 16, color: theme.colorScheme.onSurfaceVariant),
-          label: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 100),
-                child: Text(
-                  current.isEmpty ? '-' : current,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelLarge,
-                ),
-              ),
-              Icon(Icons.arrow_drop_down_rounded,
-                  size: 18, color: theme.colorScheme.onSurfaceVariant),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
