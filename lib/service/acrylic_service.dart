@@ -134,6 +134,27 @@ class AcrylicService {
     }
   }
 
+  /// 最小化前主动降级为实色。
+  ///
+  /// 最小化会让 DWM 销毁 Acrylic 的合成层，且事后任何重设都无法唤醒
+  /// （属性成功、画面死，实测连完整重建都无效）。解法是**赶在销毁前
+  /// 自己摘掉材质**：最小化时窗口里没有 Acrylic 可丢，还原后再重新
+  /// 启用——两次状态迁移都发生在窗口存活期间，DWM 能正常处理。
+  ///
+  /// 用实色而不是 disabled：disabled 会让窗口露出 Flutter 的透明
+  /// 表面（黑），实色与页面底色一致，最小化动画期间无违和。
+  static Future<void> prepareForMinimize() async {
+    if (!_supported || !_pluginReady || !transparentBackground) return;
+    try {
+      final dark = Theme.of(Get.context!).brightness == Brightness.dark;
+      await Window.setEffect(
+        effect: WindowEffect.solid,
+        color: dark ? const Color(0xFF202020) : const Color(0xFFF3F3F3),
+      );
+      debugPrint('AcrylicService: 已降级为实色（最小化前）');
+    } catch (_) {}
+  }
+
   /// Acrylic 的染色。
   ///
   /// **浅色 0x8C（55% 白）**是三轮试出来的平衡点：

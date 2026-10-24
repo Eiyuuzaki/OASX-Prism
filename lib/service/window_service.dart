@@ -279,6 +279,13 @@ class WindowService extends GetxService with WindowListener {
   @override
   void onWindowUnmaximize() => _rebuildMaterial();
 
+  /// 最小化前主动摘掉 Acrylic（见 AcrylicService.prepareForMinimize）。
+  @override
+  void onWindowMinimize() {
+    if (!PlatformUtils.isDesktop) return;
+    unawaited(AcrylicService.prepareForMinimize());
+  }
+
   /// 窗口获得焦点时轻量补设材质。
   ///
   /// 普通聚焦切换不会销毁 DWM 的 backdrop 合成，轻量重发（不归零）
@@ -293,12 +300,23 @@ class WindowService extends GetxService with WindowListener {
   /// （实测：SYSTEMBACKDROP_TYPE=3 属性还在、画面却是纯灰）。
   /// 走完整 `applyEffect`（内部先 ACCENT_DISABLED 归零再设）才能唤醒；
   /// 还原/最大化本身带系统动画，归零瞬间不会构成可见闪烁。
+  ///
+  /// 动画期间下发的状态可能被丢弃，间隔补两轮。
   void _rebuildMaterial() {
     if (!PlatformUtils.isDesktop) return;
     final dark = Get.isRegistered<ThemeService>()
         ? Get.find<ThemeService>().isDarkMode
         : false;
-    unawaited(AcrylicService.applyEffect(dark: dark));
+    unawaited(_rebuildWithRetry(dark));
+  }
+
+  Future<void> _rebuildWithRetry(bool dark) async {
+    for (final delay in const [0, 400, 900]) {
+      if (delay > 0) {
+        await Future.delayed(Duration(milliseconds: delay));
+      }
+      await AcrylicService.applyEffect(dark: dark);
+    }
   }
 
   void _reapplyMaterial() {
