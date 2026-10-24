@@ -118,6 +118,31 @@ class AcrylicService {
         return false;
       }
 
+      // 0) 去掉 WS_CAPTION —— DWM backdrop 能否绘制的硬前提。
+      //
+      // 窗口若仍带系统标题栏样式，DWM 会按「普通带边框窗口」合成，
+      // SYSTEMBACKDROP_TYPE 设得再对也不画材质。实测：加上这一步之前，
+      // 材质时有时无（属性查得到 =4、像素纯色）；加上之后稳定生效。
+      //
+      // `window_manager` 的 titleBarStyle.hidden 只处理 WM_NCCALCSIZE，
+      // 没有真正去掉样式位，这里补一刀。
+      final getWindowLong = user32.lookupFunction<
+          IntPtr Function(IntPtr, Int32),
+          int Function(int, int)>('GetWindowLongPtrW');
+      final setWindowLong = user32.lookupFunction<
+          IntPtr Function(IntPtr, Int32, IntPtr),
+          int Function(int, int, int)>('SetWindowLongPtrW');
+      const gwlStyle = -16;
+      const wsCaption = 0x00C00000;
+      const wsThickFrame = 0x00040000;
+      final style = getWindowLong(hwnd, gwlStyle);
+      final newStyle = style & ~wsCaption & ~wsThickFrame;
+      if (newStyle != style) {
+        setWindowLong(hwnd, gwlStyle, newStyle);
+        debugPrint('AcrylicService: 去掉 WS_CAPTION/WS_THICKFRAME '
+            '(0x${style.toRadixString(16)} → 0x${newStyle.toRadixString(16)})');
+      }
+
       // 1) 玻璃边距：整窗交给 DWM 合成，未绘制处透出材质
       final extendFrame = dwmapi.lookupFunction<
           Int32 Function(IntPtr, Pointer<MARGINS>),

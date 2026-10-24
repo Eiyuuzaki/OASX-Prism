@@ -141,7 +141,18 @@ class WindowService extends GetxService with WindowListener {
       minimumSize: minimumSize,
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.hidden,
+      // **用 normal 而不是 hidden**。
+      //
+      // window_manager 在 TitleBarStyle.hidden 下会主动把客户区
+      // 左右各缩进 8px、底部缩进 8px（见 window_manager_plugin.cpp
+      // 的 WM_NCCALCSIZE 分支，注释说明是为了保留边缘拉伸热区，
+      // issue #483）。那 8px 由系统填成纯白 —— 就是窗口四周
+      // 那圈明显的白边。
+      //
+      // 我们不做边缘拉伸（窗口尺寸固定），所以不需要那个热区；
+      // 改用 normal 后客户区等于窗口矩形，白边消失。
+      // 系统标题栏本身由 AcrylicService 去掉 WS_CAPTION 处理。
+      titleBarStyle: TitleBarStyle.normal,
     );
   }
 
