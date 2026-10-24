@@ -71,7 +71,10 @@ void killServer() {
                     }
                   },
 ),
-          FilledButton(
+          AppButton(
+            label: I18n.confirm.tr,
+            variant: AppButtonVariant.primary,
+            loading: killing,
             onPressed: killing
                 ? null
                 : () async {
@@ -99,13 +102,6 @@ void killServer() {
                       autoCloseTimer.cancel();
                     }
                   },
-            child: killing
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: AppProgressIndicator.circular(strokeWidth: 2),
-                  )
-                : Text(I18n.confirm.tr),
           ),
         ],
       );

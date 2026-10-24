@@ -226,7 +226,7 @@ class _UpdateProxyUrlFieldState extends State<UpdateProxyUrlField> {
       _syncTextController();
       return SizedBox(
         width: 220,
-        child: TextField(
+        child: AppTextField(
           controller: _controller,
           focusNode: _focusNode,
           keyboardType: TextInputType.url,
@@ -237,14 +237,10 @@ class _UpdateProxyUrlFieldState extends State<UpdateProxyUrlField> {
             bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
           ),
           textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(
-            hintText: 'http://127.0.0.1:7897',
-          ),
-          onTapOutside:
-              PlatformUtils.isWeb ? null : (_) => _focusNode.unfocus(),
-          onEditingComplete:
-              PlatformUtils.isWeb ? null : _focusNode.unfocus,
+          onTapOutside: PlatformUtils.isWeb ? null : (_) => _focusNode.unfocus(),
+          onEditingComplete: PlatformUtils.isWeb ? null : _focusNode.unfocus,
           onChanged: _settingsController.updateUpdateProxyUrl,
+          hintText: 'http://127.0.0.1:7897',
         ),
       );
     });

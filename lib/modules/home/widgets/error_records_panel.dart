@@ -512,9 +512,7 @@ class _ErrorRecordsPanelState extends State<ErrorRecordsPanel> {
   }
 
   void _notify(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
-    );
+    AppInfoBar.show(message, duration: const Duration(seconds: 3));
   }
 }
 

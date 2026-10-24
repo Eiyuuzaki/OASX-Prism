@@ -96,6 +96,35 @@ ThemeData get lightTheme => ThemeData(
     ),
     margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
   ),
+
+  // 弹出菜单（PopupMenuButton / DropdownButton 的浮层）。
+  //
+  // WinUI 的 MenuFlyout：圆角 8、浅色卡片底、1px 描边、无重阴影。
+  // Material 默认是直角 + 深阴影 + 44 行高，观感差别明显。
+  popupMenuTheme: PopupMenuThemeData(
+    color: Colors.white,
+    surfaceTintColor: Colors.transparent,
+    elevation: 8,
+    shadowColor: Colors.black.withValues(alpha: 0.14),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8),
+      side: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+    ),
+    textStyle: const TextStyle(fontSize: 13, color: Color(0xFF1B1B1B)),
+  ),
+  dropdownMenuTheme: DropdownMenuThemeData(
+    menuStyle: MenuStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.white),
+      surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+      elevation: const WidgetStatePropertyAll(8),
+      shape: WidgetStatePropertyAll(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+        ),
+      ),
+    ),
+  ),
 );
 
 // AMOLED 纯黑深色主题：设置页可切换（OLED 省电 + 对比度拉满）
@@ -148,5 +177,31 @@ ThemeData get darkTheme => ThemeData(
       side: BorderSide(color: Colors.white.withValues(alpha: 0.18), width: 1),
     ),
     margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  ),
+
+  // 深色菜单：比页面底亮一档 + 白色半透明描边（与 AppCard 一致）
+  popupMenuTheme: PopupMenuThemeData(
+    color: const Color(0xFF2C2C2C),
+    surfaceTintColor: Colors.transparent,
+    elevation: 8,
+    shadowColor: Colors.black.withValues(alpha: 0.30),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8),
+      side: const BorderSide(color: Color(0x26FFFFFF), width: 1),
+    ),
+    textStyle: const TextStyle(fontSize: 13, color: Color(0xFFFFFFFF)),
+  ),
+  dropdownMenuTheme: DropdownMenuThemeData(
+    menuStyle: MenuStyle(
+      backgroundColor: const WidgetStatePropertyAll(Color(0xFF2C2C2C)),
+      surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+      elevation: const WidgetStatePropertyAll(8),
+      shape: WidgetStatePropertyAll(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Color(0x26FFFFFF), width: 1),
+        ),
+      ),
+    ),
   ),
 );

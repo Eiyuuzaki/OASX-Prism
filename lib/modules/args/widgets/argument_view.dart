@@ -181,14 +181,16 @@ class _ArgumentViewState extends State<ArgumentView> {
               children: (model.enumEnum ?? const <String>[]).map((option) {
                 final selected = List<String>.from(model.value as List);
                 final checked = selected.contains(option);
-                return FilterChip(
-                  label: Text(option.tr),
+                return AppChip(
+                  label: option.tr,
                   selected: checked,
-                  onSelected: isLocked || (checked && selected.length == 1)
+                  onTap: isLocked || (checked && selected.length == 1)
                       ? null
-                      : (enabled) {
+                      : () {
                           final next = List<String>.from(selected);
-                          if (enabled) { next.add(option); } else { next.remove(option); }
+                          // FilterChip 的 onSelected 参数表示"是否变为选中"，
+                          // AppChip 没有这个参数，直接用当前状态取反
+                          if (checked) { next.remove(option); } else { next.add(option); }
                           _applyValue(next, 'multi_enum', useSetState: true);
                         },
                 );
@@ -231,7 +233,7 @@ class _ArgumentViewState extends State<ArgumentView> {
   }) {
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
     final isSingleLine = maxLines == 1;
-    return TextFormField(
+    return AppTextField(
       controller: _textController,
       focusNode: _focusNode,
       enabled: enabled,
@@ -244,15 +246,13 @@ class _ArgumentViewState extends State<ArgumentView> {
         right: 12,
         bottom: keyboardInset > 0 ? keyboardInset + 24 : 24,
       ),
-      textInputAction:
-          isSingleLine ? TextInputAction.done : TextInputAction.newline,
-      decoration: InputDecoration(errorText: errorText),
-      onTapOutside:
-          PlatformUtils.isWeb ? null : (_) => _focusNode.unfocus(),
+      textInputAction: isSingleLine ? TextInputAction.done : TextInputAction.newline,
+      onTapOutside: PlatformUtils.isWeb ? null : (_) => _focusNode.unfocus(),
       onEditingComplete: PlatformUtils.isWeb
           ? null
           : (isSingleLine ? _focusNode.unfocus : null),
       onChanged: onChanged ?? _scheduleStringChange,
+      errorText: errorText,
     );
   }
 

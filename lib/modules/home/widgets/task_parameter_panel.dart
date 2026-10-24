@@ -180,12 +180,10 @@ class _TaskParameterPanelState extends State<TaskParameterPanel> {
     final service = Get.find<ScriptService>();
     await service.wsService.send(config, 'get_schedule');
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            [I18n.configJsonImported.tr, ...result.warnings].join('\n'),
-          ),
-        ),
+      AppInfoBar.show(
+        I18n.configJsonImported.tr,
+        message: result.warnings.join('\n'),
+        severity: AppInfoBarSeverity.success,
       );
     }
   }
