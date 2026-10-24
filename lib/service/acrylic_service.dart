@@ -1,47 +1,36 @@
+import 'dart:ffi';
 import 'dart:io' show Platform;
 
+import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
-/// 窗口材质接入（flutter_acrylic）。
+/// 窗口材质接入（flutter_acrylic + 少量 Win32 兜底）。
 ///
-/// 材质**默认开启**，不再提供开关：Mica 走 DWM 的系统材质，开销远低于
-/// Acrylic 的实时模糊，没有关闭的必要。
+/// ## 材质优先级（实测结论）
 ///
-/// ## 为什么用 Mica 而不是 Acrylic
+/// 1. **Mica Alt（tabbed）**——DWM 托管，最小化/还原不丢，壁纸透出明显。
+/// 2. **Mica**——更含蓄，后备。
+/// 3. **Acrylic**——质感最强但最小化后会丢（Win11 已知问题，参数重设
+///    无法唤醒），仅最后后备。
 ///
-/// Acrylic 模糊的是**窗口背后**的内容。实测：背后铺一个白底网页时，
-/// 40% 白 tint 糊上去就是一片平坦浅灰——标题栏 (211,211,211)、蓝-R = 0.0、
-/// 局部对比度 0.00，观感完全等同于"没有玻璃"，且随背后窗口不同而变化。
+/// ## 为什么还要自己调 DwmExtendFrameIntoClientArea
 ///
-/// Mica 取的是**桌面壁纸**，不受背后是什么窗口影响，观感稳定。
-/// 这里优先用 Mica Alt（`tabbed`，染色比 Mica 更明显），依次回退。
-///
-/// ## 调用顺序
-///
-/// 1. `Window.initialize()` 必须在 `runApp` **之前**
-/// 2. 材质要在 `window_manager` 的窗口样式操作**之后**应用，否则被覆盖
+/// flutter_acrylic 在设置 Mica/Tabbed 时会顺带设 `MARGINS{-1}` 让客户区
+/// 透明，但实测（Win11 26200）DWM 属性设对了、视觉却仍是纯色——
+/// 客户区被 Flutter 的不透明表面盖住。显式再设一次玻璃边距可让
+/// 材质真正透出。
 class AcrylicService {
   AcrylicService._();
 
   static bool _pluginReady = false;
 
   /// 材质是否已实际生效（供主题层判断要不要把背景设为透明）。
-  ///
-  /// - 桌面（Windows/macOS）：由系统材质下发成功与否决定
-  /// - 移动端：恒为 false——系统没有窗口材质，但**主题仍需让出透明底**，
-  ///   否则 `FrostedBars` 的 `BackdropFilter` 下方是不透明纯色，毛玻璃看不出来。
-  ///   移动端的透明底由 [mobileFrostedBackground] 单独判定。
   static bool transparentBackground = false;
 
   /// 移动端是否需要透明 scaffold 底（供 `FrostedBars` 生效）。
-  ///
-  /// 移动端没有系统窗口材质，毛玻璃是 Flutter 自渲染的 `BackdropFilter`：
-  /// 它只会模糊**下方已绘制的内容**。若 scaffold 画不透明底色，
-  /// 底栏/AppBar 的模糊层下面就是纯色，视觉上等于没有毛玻璃。
-  /// 因此移动端把 scaffold 底设为透明，让页面内容/壁纸透上来。
   static bool get mobileFrostedBackground => _isMobile;
 
   /// 支持系统材质的平台。
@@ -70,33 +59,33 @@ class AcrylicService {
   }
 
   /// 阶段二：应用材质。在窗口就绪之后调用。
-  ///
-  /// 优先级（实测结论，勿随意调换）：
-  ///
-  /// 1. **Acrylic**——实时模糊 + 染色，材质感最强，且模糊会把壁纸的
-  ///    区域色差抹平（Mica Alt 会把壁纸的深色花瓣直接透出来，
-  ///    导致侧栏与内容区"底色不一致"）。
-  /// 2. **Mica**——Acrylic 不可用时的后备。染色含蓄但均匀。
-  /// 3. **Mica Alt**——最后手段，只求有材质。
-  ///
-  /// 注意 Acrylic 的系统行为：窗口最大化时 Win11 会自动回退为实色，
-  /// 这是性能设计，不是 bug。
   static Future<void> applyEffect({bool? dark}) async {
     if (!_supported || !_pluginReady) return;
     final useDark = dark ?? false;
 
-    // 1) Acrylic：实时模糊背后内容，用 tint 控制明暗。
-    //
-    // tint 定为 0x66（40%）——用户验收确认的值。调参过程记录：
-    // - 0x99（60%）：几乎变成实色，材质感消失
-    // - Mica（无 tint）：材质感太弱
-    // - Mica Alt：壁纸的区域色变直接透出（Bloom 壁纸的深紫花瓣），
-    //   侧栏与内容区看起来"底色不一致"
-    //
-    // Acrylic 在 0x66 下侧栏与内容会有可测的色差（壁纸区域色透过毛玻璃），
-    // 但视觉上是自然的"玻璃在不同背景上"的效果，不要试图用加深 tint 消除它。
-    //
-    // 深色下 0xCC（80%）：深色主题对比度敏感，太透会让白字看不清。
+    // 1) Mica Alt（tabbed）：DWM 托管 + 壁纸透出明显，首选。
+    try {
+      await Window.setEffect(effect: WindowEffect.tabbed, dark: useDark);
+      transparentBackground = true;
+      await _extendGlassIntoClientArea();
+      debugPrint('AcrylicService: tabbed/mica-alt (dark=$useDark) OK');
+      return;
+    } catch (e) {
+      debugPrint('AcrylicService: tabbed failed: $e');
+    }
+
+    // 2) Mica：更含蓄，后备。
+    try {
+      await Window.setEffect(effect: WindowEffect.mica, dark: useDark);
+      transparentBackground = true;
+      await _extendGlassIntoClientArea();
+      debugPrint('AcrylicService: mica (dark=$useDark) OK');
+      return;
+    } catch (e) {
+      debugPrint('AcrylicService: mica failed: $e');
+    }
+
+    // 3) Acrylic：质感最强但最小化后会丢，最后后备。
     final tint = useDark
         ? const Color(0xCC0A0A0C)
         : const Color(0x66FFFFFF);
@@ -110,47 +99,77 @@ class AcrylicService {
       debugPrint('AcrylicService: acrylic failed: $e');
     }
 
-    // 2) Mica：取壁纸但染色含蓄、整窗均匀。
-    try {
-      await Window.setEffect(effect: WindowEffect.mica, dark: useDark);
-      transparentBackground = true;
-      debugPrint('AcrylicService: mica (dark=$useDark) OK');
-      return;
-    } catch (e) {
-      debugPrint('AcrylicService: mica failed: $e');
-    }
-
-    // 3) Mica Alt（tabbed）：染色最强、也最不均匀，最后手段。
-    try {
-      await Window.setEffect(effect: WindowEffect.tabbed, dark: useDark);
-      transparentBackground = true;
-      debugPrint('AcrylicService: tabbed/mica-alt (dark=$useDark) OK');
-      return;
-    } catch (e) {
-      debugPrint('AcrylicService: tabbed failed: $e');
-    }
-
     debugPrint('AcrylicService: all effects failed, keep opaque background');
     transparentBackground = false;
+  }
+
+  /// 显式设置 DWM 玻璃边距，让客户区真正透明。
+  ///
+  /// `MARGINS{-1,-1,-1,-1}` 是「sheet of glass」：整窗交给 DWM 合成，
+  /// Flutter 画的内容叠在上面，未绘制处透出 DWM 背景（Mica/Tabbed）。
+  ///
+  /// 用 dart:ffi 直接调，因为 flutter_acrylic 在部分 Win11 构建上
+  /// 这一步会被它自己的 ACCENT_DISABLED 前置调用抵消。
+  static Future<void> _extendGlassIntoClientArea() async {
+    if (!Platform.isWindows) return;
+    try {
+      final user32 = DynamicLibrary.open('user32.dll');
+      final dwmapi = DynamicLibrary.open('dwmapi.dll');
+
+      // 找本进程的 Flutter 窗口
+      final findWindow = user32.lookupFunction<
+          IntPtr Function(Pointer<Utf16>, Pointer<Utf16>),
+          int Function(Pointer<Utf16>, Pointer<Utf16>)>('FindWindowW');
+      final className = 'FLUTTER_RUNNER_WIN32_WINDOW'.toNativeUtf16();
+      final hwnd = findWindow(className, nullptr);
+      calloc.free(className);
+      if (hwnd == 0) {
+        debugPrint('AcrylicService: FindWindowW 未找到窗口');
+        return;
+      }
+
+      final extendFrame = dwmapi.lookupFunction<
+          Int32 Function(IntPtr, Pointer<MARGINS>),
+          int Function(int, Pointer<MARGINS>)>('DwmExtendFrameIntoClientArea');
+      final margins = calloc<MARGINS>();
+      margins.ref.cxLeftWidth = -1;
+      margins.ref.cxRightWidth = -1;
+      margins.ref.cyTopHeight = -1;
+      margins.ref.cyBottomHeight = -1;
+      final hr = extendFrame(hwnd, margins);
+      calloc.free(margins);
+      debugPrint('AcrylicService: DwmExtendFrameIntoClientArea hr=0x'
+          '${hr.toRadixString(16)}');
+    } catch (e) {
+      debugPrint('AcrylicService: extend glass failed: $e');
+    }
   }
 
   /// 主题切换时重新应用材质（明暗分支变化）。
   static Future<void> refresh({bool dark = false}) async {
     if (!_supported || !_pluginReady) return;
     await applyEffect(dark: dark);
-    // 主题里的 scaffold/card 颜色依赖 transparentBackground，
-    // 它可能刚变过，需要让界面重建一次才能生效。
     Get.forceAppUpdate();
   }
 
   /// 仅重设 DWM 材质，不触发界面重建。
-  ///
-  /// 用于窗口状态变化（最小化/还原、最大化、托盘恢复）后补回丢失的材质：
-  /// Windows 在这些时机可能重建合成层，把 SYSTEMBACKDROP_TYPE 重置掉，
-  /// 表现为 Mica 突然消失。此时 `transparentBackground` 没变，
-  /// 界面无需重建，只把材质重新下发一次即可。
   static Future<void> reapply({bool dark = false}) async {
     if (!_supported || !_pluginReady) return;
     await applyEffect(dark: dark);
   }
+}
+
+/// Win32 `MARGINS` 结构。
+final class MARGINS extends Struct {
+  @Int32()
+  external int cxLeftWidth;
+
+  @Int32()
+  external int cxRightWidth;
+
+  @Int32()
+  external int cyTopHeight;
+
+  @Int32()
+  external int cyBottomHeight;
 }
