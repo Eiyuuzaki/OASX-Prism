@@ -109,10 +109,10 @@ class _HomeViewState extends State<HomeView> {
         routePath: '/home',
         trailingActions: PlatformUtils.usesDesktopLayout
             ? [
-                IconButton(
+                AppIconButton(
                   tooltip: I18n.setting.tr,
                   onPressed: () => Get.toNamed('/settings'),
-                  icon: const Icon(Icons.settings_rounded),
+                  icon: Icons.settings_rounded,
                 ),
               ]
             : const [],

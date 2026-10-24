@@ -61,11 +61,11 @@ class _TaskParameterPanelState extends State<TaskParameterPanel> {
         children: [
           Row(
             children: [
-              IconButton(
+              AppIconButton(
                 onPressed: () async {
                   await widget.onBack();
                 },
-                icon: const Icon(Icons.arrow_back_rounded),
+                icon: Icons.arrow_back_rounded,
               ),
               const SizedBox(width: 4),
               Expanded(

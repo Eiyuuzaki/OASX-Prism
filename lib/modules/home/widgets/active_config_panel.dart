@@ -62,10 +62,10 @@ class ActiveConfigPanel extends StatelessWidget {
               Row(
                 children: [
                   if (onBackToScripts != null)
-                    IconButton(
+                    AppIconButton(
                       tooltip: I18n.scriptList.tr,
                       onPressed: onBackToScripts,
-                      icon: const Icon(Icons.arrow_back_rounded),
+                      icon: Icons.arrow_back_rounded,
                     ),
                   Expanded(
                     child: Text(
@@ -78,10 +78,10 @@ class ActiveConfigPanel extends StatelessWidget {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  IconButton(
+                  AppIconButton(
                     tooltip: isRunning ? I18n.stop.tr : I18n.run.tr,
                     onPressed: () => onTogglePower(script.name, !isRunning),
-                    icon: const Icon(Icons.power_settings_new_rounded),
+                    icon: Icons.power_settings_new_rounded,
                   ),
                 ],
               ),

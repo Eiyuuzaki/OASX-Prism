@@ -268,13 +268,11 @@ class _PowerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    return AppIconButton(
       onPressed: onTogglePower,
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-      padding: EdgeInsets.zero,
+      dense: true,
       iconSize: 23,
-      icon: const Icon(Icons.power_settings_new_rounded),
+      icon: Icons.power_settings_new_rounded,
     );
   }
 }

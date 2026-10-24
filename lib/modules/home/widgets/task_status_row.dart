@@ -10,6 +10,7 @@ import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/widgets/split_scroll_row.dart';
 import 'package:oasx/modules/home/widgets/task_status_swipe_container.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 part 'task_status_row_parts.dart';
 

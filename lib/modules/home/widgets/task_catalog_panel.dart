@@ -708,11 +708,10 @@ class _IconOnlyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    return AppIconButton(
       tooltip: tooltip,
-      constraints: const BoxConstraints.tightFor(width: 40, height: 40),
       onPressed: onPressed,
-      icon: Icon(icon),
+      icon: icon,
     );
   }
 }

@@ -252,37 +252,28 @@ class _LogCenterPanelState extends State<LogCenterPanel> {
             Obx(() {
               final controller = _logController;
               final isEnabled = controller?.autoScroll.value ?? false;
-              return IconButton(
-                constraints: const BoxConstraints.tightFor(
-                  width: 36,
-                  height: 36,
-                ),
-                padding: const EdgeInsets.all(6),
-                visualDensity: VisualDensity.compact,
+              return AppIconButton(
                 tooltip: I18n.homeLogAutoScroll.tr,
                 onPressed: controller == null
                     ? null
                     : () => controller.toggleAutoScroll(),
-                icon: Icon(
-                  isEnabled ? Icons.flash_on_rounded : Icons.flash_off_rounded,
-                ),
+                dense: true,
+                icon: isEnabled
+                    ? Icons.flash_on_rounded
+                    : Icons.flash_off_rounded,
               );
             }),
-            IconButton(
-              constraints: const BoxConstraints.tightFor(width: 36, height: 36),
-              padding: const EdgeInsets.all(6),
-              visualDensity: VisualDensity.compact,
+            AppIconButton(
               tooltip: I18n.copy.tr,
               onPressed: _copyVisibleLogs,
-              icon: const Icon(Icons.content_copy_rounded),
+              dense: true,
+              icon: Icons.content_copy_rounded,
             ),
-            IconButton(
-              constraints: const BoxConstraints.tightFor(width: 36, height: 36),
-              padding: const EdgeInsets.all(6),
-              visualDensity: VisualDensity.compact,
+            AppIconButton(
               tooltip: I18n.clearLog.tr,
               onPressed: _clearLogs,
-              icon: const Icon(Icons.delete_outlined),
+              dense: true,
+              icon: Icons.delete_outlined,
             ),
           ],
         ),

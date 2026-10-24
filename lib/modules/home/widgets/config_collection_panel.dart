@@ -350,18 +350,12 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
+                    AppIconButton(
                       tooltip: I18n.homeScriptSearchHint.tr,
                       onPressed: _toggleCompactSearch,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 40,
-                        height: 40,
-                      ),
-                      icon: Icon(
-                        _showCompactSearch
-                            ? Icons.search_off_rounded
-                            : Icons.search_rounded,
-                      ),
+                      icon: _showCompactSearch
+                          ? Icons.search_off_rounded
+                          : Icons.search_rounded,
                     ),
                     filterButton,
                   ],
@@ -479,48 +473,32 @@ class _HeaderActions extends StatelessWidget {
           ? MainAxisAlignment.center
           : MainAxisAlignment.end,
       children: [
-        IconButton(
+        AppIconButton(
           tooltip: I18n.homeConnectionRetryAction.tr,
           onPressed: refreshingScripts ? null : onRefreshScriptsTap,
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints.tightFor(width: 36, height: 36),
-          icon: refreshingScripts
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: AppProgressIndicator.circular(strokeWidth: 2),
-                )
-              : const Icon(Icons.refresh_rounded),
+          dense: true,
+          child: refreshingScripts
+              ? const AppProgressIndicator.circular(size: 16, strokeWidth: 2)
+              : const Icon(Icons.refresh_rounded, size: 18),
         ),
-        IconButton(
+        AppIconButton(
           tooltip: controller.isLinkModeEnabled.value
               ? I18n.closeTheLinker.tr
               : I18n.turnOnTheLinker.tr,
           onPressed: controller.toggleLinkMode,
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints.tightFor(width: 36, height: 36),
-          style: IconButton.styleFrom(
-            backgroundColor: controller.isLinkModeEnabled.value
-                ? Theme.of(context).colorScheme.primaryContainer
-                : null,
-            foregroundColor: controller.isLinkModeEnabled.value
-                ? Theme.of(context).colorScheme.onPrimaryContainer
-                : null,
-          ),
-          icon: const Icon(Icons.link_rounded),
+          dense: true,
+          variant: controller.isLinkModeEnabled.value
+              ? AppIconButtonVariant.tonal
+              : AppIconButtonVariant.subtle,
+          icon: Icons.link_rounded,
         ),
-        IconButton(
+        AppIconButton(
           tooltip: I18n.configAdd.tr,
           onPressed: loadingAddScript ? null : onAddScriptTap,
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints.tightFor(width: 36, height: 36),
-          icon: loadingAddScript
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: AppProgressIndicator.circular(strokeWidth: 2),
-                )
-              : const Icon(Icons.add_rounded),
+          dense: true,
+          child: loadingAddScript
+              ? const AppProgressIndicator.circular(size: 16, strokeWidth: 2)
+              : const Icon(Icons.add_rounded, size: 18),
         ),
       ],
     );

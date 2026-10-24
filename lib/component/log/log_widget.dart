@@ -207,37 +207,37 @@ class TopLogPanel extends StatelessWidget {
   }
 
   Widget _copyButton() {
-    return IconButton(
-      icon: const Icon(Icons.content_copy_rounded, size: 18),
+    return AppIconButton(
+      icon: Icons.content_copy_rounded,
+      iconSize: 18,
       onPressed: () => controller.copyLogs(),
     );
   }
 
   Widget _autoScrollButton() {
-    return Obx(() => IconButton(
-          icon: Icon(
-            controller.autoScroll.value ? Icons.flash_on : Icons.flash_off,
-            size: 20,
-          ),
+    return Obx(() => AppIconButton(
+          icon: controller.autoScroll.value
+              ? Icons.flash_on
+              : Icons.flash_off,
+          iconSize: 20,
           onPressed: controller.toggleAutoScroll,
         ));
   }
 
   Widget _deleteButton() {
-    return IconButton(
-      icon: const Icon(Icons.delete_outlined, size: 20),
+    return AppIconButton(
+      icon: Icons.delete_outlined,
+      iconSize: 20,
       onPressed: () => controller.clearLog(),
     );
   }
 
   Widget _collapseButton() {
-    return Obx(() => IconButton(
-          icon: Icon(
-            controller.collapseLog.value
-                ? Icons.expand_more
-                : Icons.expand_less,
-            size: 20,
-          ),
+    return Obx(() => AppIconButton(
+          icon: controller.collapseLog.value
+              ? Icons.expand_more
+              : Icons.expand_less,
+          iconSize: 20,
           onPressed: () => controller.toggleCollapse(),
         ));
   }

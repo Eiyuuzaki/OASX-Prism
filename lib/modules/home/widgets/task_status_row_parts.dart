@@ -128,13 +128,11 @@ class _TaskActionIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    return AppIconButton(
       tooltip: tooltip,
-      padding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints.tightFor(width: 40, height: 40),
       onPressed: onPressed,
-      icon: Icon(icon),
+      dense: true,
+      icon: icon,
     );
   }
 }

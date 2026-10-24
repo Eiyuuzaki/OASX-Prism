@@ -145,13 +145,12 @@ class _ErrorRecordsPanelState extends State<ErrorRecordsPanel> {
     required IconData icon,
     required VoidCallback? onPressed,
   }) {
-    return IconButton(
+    return AppIconButton(
       tooltip: tooltip,
-      icon: Icon(icon, size: 20),
+      icon: icon,
+      iconSize: 20,
       onPressed: onPressed,
-      constraints: const BoxConstraints.tightFor(width: 36, height: 36),
-      padding: const EdgeInsets.all(6),
-      visualDensity: VisualDensity.compact,
+      dense: true,
     );
   }
 
