@@ -150,14 +150,13 @@ class _TaskCatalogPanelState extends State<TaskCatalogPanel> {
   }
 
   Widget _buildToolbar() {
-    final searchField = TextField(
+    final searchField = AppTextField(
       controller: _searchController,
-      decoration: InputDecoration(
-        isDense: true,
-        prefixIcon: const Icon(Icons.search_rounded),
-        hintText: I18n.taskSearchHint.tr,
-        border: const OutlineInputBorder(),
-      ),
+      prefixIcon: const Icon(Icons.search_rounded, size: 18),
+      hintText: I18n.taskSearchHint.tr,
+      fillColor: FluentPalette.of(context).isDark
+          ? const Color(0x14FFFFFF)
+          : const Color(0x1A000000),
       onChanged: (value) => setState(() {
         _searchQuery = value.trim().toLowerCase();
       }),

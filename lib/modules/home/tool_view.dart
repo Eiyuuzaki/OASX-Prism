@@ -4,6 +4,7 @@ import 'package:styled_widget/styled_widget.dart';
 
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 class NotifyTest extends StatefulWidget {
   const NotifyTest({Key? key}) : super(key: key);
@@ -38,51 +39,49 @@ class NotifyTestState extends State<NotifyTest> {
   }
 
   Widget _config() {
-    return TextFormField(
-        keyboardType: TextInputType.multiline,
-        textInputAction: TextInputAction.newline,
-        maxLines: null,
-        initialValue: testConfig,
-        decoration: InputDecoration(
-            labelText: I18n.notifyTestConfig.tr,
-            helperText: I18n.notifyTestHelp.tr),
-        onChanged: (value) {
+    return AppTextField(
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      maxLines: null,
+      initialValue: testConfig,
+      onChanged: (value) {
           setState(() {
             testConfig = value;
           });
-        }).constrained(width: 300);
+        },
+      labelText: I18n.notifyTestConfig.tr,
+      helperText: I18n.notifyTestHelp.tr,
+    ).constrained(width: 300);
   }
 
   Widget _title() {
-    return TextFormField(
-        keyboardType: TextInputType.multiline,
-        textInputAction: TextInputAction.newline,
-        maxLines: null,
-        initialValue: testTitle,
-        decoration: InputDecoration(
-          labelText: I18n.notifyTestTitle.tr,
-        ),
-        onChanged: (value) {
+    return AppTextField(
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      maxLines: null,
+      initialValue: testTitle,
+      onChanged: (value) {
           setState(() {
             testTitle = value;
           });
-        }).constrained(width: 300);
+        },
+      labelText: I18n.notifyTestTitle.tr,
+    ).constrained(width: 300);
   }
 
   Widget _content() {
-    return TextFormField(
-        keyboardType: TextInputType.multiline,
-        textInputAction: TextInputAction.newline,
-        maxLines: null,
-        initialValue: testContent,
-        decoration: InputDecoration(
-          labelText: I18n.notifyTestContent.tr,
-        ),
-        onChanged: (value) {
+    return AppTextField(
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      maxLines: null,
+      initialValue: testContent,
+      onChanged: (value) {
           setState(() {
             testContent = value;
           });
-        }).constrained(width: 300);
+        },
+      labelText: I18n.notifyTestContent.tr,
+    ).constrained(width: 300);
   }
 
   Widget _send() {

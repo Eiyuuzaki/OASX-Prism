@@ -4,6 +4,7 @@ import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/widgets/task_status_row.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 /// Renders the overview task list for the active config workbench.
 class TaskStatusPanel extends StatefulWidget {
@@ -101,14 +102,13 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
 
   /// Builds the local overview search field above the task list.
   Widget _buildSearchField() {
-    return TextField(
+    return AppTextField(
       controller: _searchController,
-      decoration: InputDecoration(
-        isDense: true,
-        prefixIcon: const Icon(Icons.search_rounded),
-        hintText: I18n.taskSearchHint.tr,
-        border: const OutlineInputBorder(),
-      ),
+      prefixIcon: const Icon(Icons.search_rounded, size: 18),
+      hintText: I18n.taskSearchHint.tr,
+      fillColor: FluentPalette.of(context).isDark
+          ? const Color(0x14FFFFFF)
+          : const Color(0x1A000000),
       onChanged: (value) => setState(() {
         _searchQuery = value.trim().toLowerCase();
       }),

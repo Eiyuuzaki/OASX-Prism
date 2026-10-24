@@ -30,6 +30,8 @@ class AppTextField extends StatelessWidget {
     this.inputFormatters,
     this.scrollPadding,
     this.textInputAction,
+    this.labelText,
+    this.helperText,
     this.hintText,
     this.errorText,
     this.prefixIcon,
@@ -54,6 +56,12 @@ class AppTextField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final EdgeInsets? scrollPadding;
   final TextInputAction? textInputAction;
+  /// 浮动标签（WinUI 的 Header）。
+  final String? labelText;
+
+  /// 辅助说明文字（显示在输入框下方）。
+  final String? helperText;
+
   final String? hintText;
   final String? errorText;
   final Widget? prefixIcon;
@@ -71,6 +79,7 @@ class AppTextField extends StatelessWidget {
   final bool readOnly;
   final FormFieldValidator<String>? validator;
   final String? initialValue;
+
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +141,8 @@ class AppTextField extends StatelessWidget {
     final radius = BorderRadius.circular(FluentRadius.control);
 
     return InputDecoration(
+      labelText: labelText,
+      helperText: helperText,
       hintText: hintText,
       errorText: errorText,
       prefixIcon: prefixIcon,
@@ -146,13 +157,15 @@ class AppTextField extends StatelessWidget {
       suffixIconConstraints:
           const BoxConstraints(minWidth: 34, minHeight: 34),
       hintStyle: TextStyle(color: p.textTertiary),
-      // 未聚焦：四周 1px 浅描边 + 底部 1px 深线
+      // 未聚焦：只保留四周 1px 浅描边。
+      //
+      // **底部线统一去掉**：原先模拟 WinUI TextBox 在底边画一条更深的
+      // 线，但在材质背景上与框的描边叠成双层、看起来脏；而且聚焦时的
+      // 动画下划线已经足够表达焦点，底边那条静态线是冗余的。
       enabledBorder: _FluentInputBorder(
         borderRadius: radius,
         baseColor: p.stroke,
-        bottomColor: p.isDark
-            ? const Color(0x8AFFFFFF)
-            : const Color(0x73000000),
+        bottomColor: Colors.transparent,
       ),
       // 聚焦：底部线交给 _AnimatedFocusUnderline 画（从中间展开），
       focusedBorder: _FluentInputBorder(
@@ -186,6 +199,8 @@ class AppTextField extends StatelessWidget {
   InputDecoration _materialDecoration(BuildContext context, Color? fill) {
     final scheme = Theme.of(context).colorScheme;
     return InputDecoration(
+      labelText: labelText,
+      helperText: helperText,
       hintText: hintText,
       errorText: errorText,
       prefixIcon: prefixIcon,

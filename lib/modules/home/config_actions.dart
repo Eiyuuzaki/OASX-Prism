@@ -52,10 +52,7 @@ class ConfigActions {
       content: Form(
         key: formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: TextFormField(
-          decoration: InputDecoration(
-            labelText: I18n.newName.tr,
-          ),
+        child: AppTextField(
           validator: (String? value) {
             final input = value?.trim() ?? '';
             return validateRenameName(
@@ -65,6 +62,7 @@ class ConfigActions {
             );
           },
           onChanged: (v) => newName = v.trim(),
+          labelText: I18n.newName.tr,
         ),
       ),
       onConfirm: () async {

@@ -53,8 +53,10 @@ class ConfigTransferDialogs {
       ),
     );
     if (path != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${I18n.configJsonSaved.tr}：$path')),
+      AppInfoBar.show(
+        I18n.configJsonSaved.tr,
+        message: path,
+        severity: AppInfoBarSeverity.success,
       );
     }
   }
@@ -117,10 +119,10 @@ class _ConfigJsonImportDialogState extends State<ConfigJsonImportDialog> {
               if (_isTask)
                 Text('${widget.configName} / ${widget.taskName!.tr}')
               else
-                TextField(
+                AppTextField(
                   controller: _name,
                   enabled: !_busy,
-                  decoration: InputDecoration(labelText: I18n.newName.tr),
+                  labelText: I18n.newName.tr,
                 ),
               const SizedBox(height: 12),
               OutlinedButton.icon(

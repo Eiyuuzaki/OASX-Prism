@@ -48,7 +48,7 @@ Future<String?> showAddConfigDialog(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(I18n.newName.tr),
-                    TextFormField(
+                    AppTextField(
                       initialValue: newName,
                       enabled: !isSubmitting.value,
                       onChanged: (value) {
@@ -57,21 +57,16 @@ Future<String?> showAddConfigDialog(
                     ),
                     const SizedBox(height: 12),
                     Text(I18n.configCopyFromExist.tr),
-                    DropdownButton<String>(
+                    AppDropdown<String>(
                       value: selectedTemplate.value,
-                      menuMaxHeight: 300,
-                      isExpanded: true,
+                      maxWidth: double.infinity,
+                      enabled: !isSubmitting.value,
                       items: configAll
-                          .map<DropdownMenuItem<String>>(
-                            (e) => DropdownMenuItem(value: e, child: Text(e)),
-                          )
+                          .map((e) => AppDropdownItem(value: e, label: e))
                           .toList(),
-                      onChanged: isSubmitting.value
-                          ? null
-                          : (value) {
-                              if (value == null) return;
-                              selectedTemplate.value = value;
-                            },
+                      onChanged: (value) {
+                        selectedTemplate.value = value;
+                      },
                     ),
                     const SizedBox(height: 12),
                     TextButton.icon(
@@ -156,12 +151,10 @@ Future<String?> showAddConfigDialog(
       configName: imported.configName,
     );
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            [I18n.configJsonImported.tr, ...imported.warnings].join('\n'),
-          ),
-        ),
+      AppInfoBar.show(
+        I18n.configJsonImported.tr,
+        message: imported.warnings.join('\n'),
+        severity: AppInfoBarSeverity.success,
       );
     }
   } finally {

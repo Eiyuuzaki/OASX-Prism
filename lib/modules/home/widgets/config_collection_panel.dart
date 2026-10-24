@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oasx/service/acrylic_service.dart';
 import 'package:oasx/ui/ui.dart';
 import 'package:oasx/modules/common/models/config_drag_payload.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
@@ -513,40 +512,16 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    // 边框与聚焦态交给 AppTextField（WinUI 的框 + 下划线展开动画），
+    // 不再自己拼三套 OutlineInputBorder。
+    return AppTextField(
       controller: controller,
-      decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.search_rounded),
-        hintText: I18n.homeScriptSearchHint.tr,
-        // 毛玻璃生效时用半透明底让底层透出来；否则用实色，避免白底白框
-        filled: true,
-        fillColor: AcrylicService.transparentBackground
-            ? Colors.white.withValues(alpha: 0.20)
-            : Theme.of(context).colorScheme.surfaceContainerHighest
-                .withValues(alpha: 0.6),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Colors.white.withValues(alpha: 0.35),
-            width: 1,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Colors.white.withValues(alpha: 0.35),
-            width: 1,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
-            width: 1.5,
-          ),
-        ),
-        isDense: true,
-      ),
+      prefixIcon: const Icon(Icons.search_rounded, size: 18),
+      hintText: I18n.homeScriptSearchHint.tr,
+      // 搜索框是轻量输入：不画底部强调线，底色半透明让材质透上来
+      fillColor: FluentPalette.of(context).isDark
+          ? const Color(0x14FFFFFF)
+          : const Color(0x1A000000),
       onChanged: onChanged,
     );
   }
