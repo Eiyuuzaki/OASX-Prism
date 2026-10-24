@@ -80,7 +80,7 @@ class AppTextField extends StatelessWidget {
         : _materialDecoration(context, fillColor);
 
     // initialValue 与 controller 互斥，TextFormField 会断言检查
-    return TextFormField(
+    final field = TextFormField(
       controller: controller,
       focusNode: focusNode,
       initialValue: controller == null ? initialValue : null,
@@ -101,6 +101,21 @@ class AppTextField extends StatelessWidget {
       validator: validator,
       style: _textStyle(context),
       decoration: decoration,
+    );
+
+    if (style != AppUiStyle.fluent) return field;
+
+    // WinUI 的聚焦下划线**从中间向两边展开**（不是直接出现）。
+    //
+    // 实现：叠一条宽度 0 → 满宽的强调色线，用 TweenAnimationBuilder
+    // 做 167ms 过渡。同时把 focusedBorder 的底部线设成透明（见
+    // _fluentDecoration），避免两条线叠在一起。
+    //
+    // 聚焦状态来自 FocusNode——调用方传了就用它，没传则由本组件
+    // 内部创建并负责释放（_AnimatedFocusUnderline 内部管理）。
+    return _AnimatedFocusUnderline(
+      focusNode: focusNode,
+      child: field,
     );
   }
 
@@ -139,11 +154,11 @@ class AppTextField extends StatelessWidget {
             ? const Color(0x8AFFFFFF)
             : const Color(0x73000000),
       ),
-      // 聚焦：底部换成 2px 强调色
+      // 聚焦：底部线交给 _AnimatedFocusUnderline 画（从中间展开），
       focusedBorder: _FluentInputBorder(
         borderRadius: radius,
         baseColor: p.stroke,
-        bottomColor: p.accent,
+        bottomColor: Colors.transparent,
         bottomWidth: 2,
       ),
       // 禁用 / 错误态
@@ -275,5 +290,86 @@ class _FluentInputBorder extends InputBorder {
           ..isAntiAlias = true,
       );
     }
+  }
+}
+
+/// 聚焦时从中间展开的强调色下划线（WinUI TextBox 的 focus underline）。
+///
+/// [focusNode] 为空时内部自建一个并负责释放——这样调用方无需为了
+/// 拿到动画而额外传 focusNode。
+class _AnimatedFocusUnderline extends StatefulWidget {
+  const _AnimatedFocusUnderline({required this.child, this.focusNode});
+
+  final Widget child;
+  final FocusNode? focusNode;
+
+  @override
+  State<_AnimatedFocusUnderline> createState() =>
+      _AnimatedFocusUnderlineState();
+}
+
+class _AnimatedFocusUnderlineState extends State<_AnimatedFocusUnderline> {
+  FocusNode? _owned;
+
+  FocusNode get _node => widget.focusNode ?? (_owned ??= FocusNode());
+
+  @override
+  void initState() {
+    super.initState();
+    _node.addListener(_onFocus);
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedFocusUnderline oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusNode != widget.focusNode) {
+      oldWidget.focusNode?.removeListener(_onFocus);
+      _owned?.dispose();
+      _owned = null;
+      _node.addListener(_onFocus);
+    }
+  }
+
+  void _onFocus() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _node.removeListener(_onFocus);
+    _owned?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final focused = _node.hasFocus;
+    return Stack(
+      children: [
+        widget.child,
+        if (focused)
+          Positioned(
+            left: 1,
+            right: 1,
+            bottom: 1,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 167),
+              curve: FluentMotion.decelerate,
+              builder: (context, t, _) => FractionallySizedBox(
+                widthFactor: t,
+                alignment: Alignment.center,
+                child: Container(
+                  height: 2,
+                  decoration: BoxDecoration(
+                    color: FluentPalette.of(context).accent,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

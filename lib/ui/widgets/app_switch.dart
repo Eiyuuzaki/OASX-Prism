@@ -95,13 +95,19 @@ class _FluentToggleState extends State<_FluentToggle> {
           : Colors.transparent;
       trackBorder = p.stroke;
     } else if (on) {
-      // 悬停时强调色略亮
-      trackColor = _hovering
-          ? Color.alphaBlend(const Color(0x0FFFFFFF), p.accent)
-          : p.accent;
+      // 悬停时强调色略亮；按下时压暗（反馈要明显——只放大滑块太细微，
+      // 点击那一瞬间根本看不出来）
+      trackColor = _pressing
+          ? Color.alphaBlend(const Color(0x1F000000), p.accent)
+          : (_hovering
+              ? Color.alphaBlend(const Color(0x0FFFFFFF), p.accent)
+              : p.accent);
       trackBorder = trackColor;
     } else {
-      trackColor = _hovering ? p.cardHover : Colors.transparent;
+      // 关闭态：按下时填一层浅底，否则整条轨道是透明的，按了毫无反馈
+      trackColor = _pressing
+          ? p.cardPressed
+          : (_hovering ? p.cardHover : Colors.transparent);
       trackBorder = p.stroke;
     }
 
@@ -128,8 +134,8 @@ class _FluentToggleState extends State<_FluentToggle> {
         onTapCancel: enabled ? () => setState(() => _pressing = false) : null,
         onTap: enabled ? () => widget.onChanged!(!widget.value) : null,
         child: AnimatedContainer(
-          duration: FluentMotion.fast,
-          curve: FluentMotion.standard,
+          duration: FluentMotion.hoverIn,
+          curve: FluentMotion.decelerate,
           width: _trackW,
           height: _trackH,
           decoration: BoxDecoration(
@@ -137,17 +143,21 @@ class _FluentToggleState extends State<_FluentToggle> {
             borderRadius: BorderRadius.circular(_trackH / 2),
             border: Border.all(color: trackBorder, width: 1),
           ),
+          // 滑块位移用 decelerate（快出慢收）而不是 standard（easeInOut）：
+          // 后者开头有一小段几乎不动，拖拽感明显迟钝；decelerate 是
+          // 松手瞬间就到位的干脆手感。
           child: AnimatedAlign(
-            duration: FluentMotion.fast,
-            curve: FluentMotion.standard,
+            duration: FluentMotion.normal,
+            curve: FluentMotion.decelerate,
             alignment: on ? Alignment.centerRight : Alignment.centerLeft,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: _knobInset),
+              // 按下时滑块略放大（WinUI 开关的标志性反馈）
               child: AnimatedContainer(
                 duration: FluentMotion.fast,
-                curve: FluentMotion.standard,
-                width: _knobD,
-                height: _knobD,
+                curve: FluentMotion.decelerate,
+                width: _pressing ? _knobD + 4 : _knobD,
+                height: _pressing ? _knobD + 4 : _knobD,
                 decoration: BoxDecoration(
                   color: knobColor,
                   shape: BoxShape.circle,

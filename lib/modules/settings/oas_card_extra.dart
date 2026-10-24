@@ -9,13 +9,19 @@ import 'package:oasx/modules/home/updater_view.dart';
 import 'package:oasx/modules/settings/controllers/settings_controller.dart';
 import 'package:oasx/service/script_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 class AutoScriptButton extends StatelessWidget {
   const AutoScriptButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    // 用语义组件而不是裸 IconButton：按下缩放（WinUI 手感）在
+    // AppIconButton 里实现，裸 IconButton 只有 Material 的涟漪。
+    return AppIconButton(
+      variant: AppIconButtonVariant.subtle,
+      icon: Icons.settings_rounded,
+      tooltip: I18n.autoRunScriptList.tr,
       onPressed: () {
         Get.defaultDialog(
           title: I18n.autoRunScriptList.tr,
@@ -24,7 +30,6 @@ class AutoScriptButton extends StatelessWidget {
           ).constrained(maxHeight: 250).card(),
         );
       },
-      icon: const Icon(Icons.settings_rounded),
     );
   }
 }

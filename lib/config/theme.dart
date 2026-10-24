@@ -78,9 +78,13 @@ ThemeData get lightTheme => ThemeData(
     // 轻微抬升，配合 shadowColor 产生弥散阴影（玻璃"浮"起来）
     elevation: 2,
     shadowColor: Colors.black.withValues(alpha: 0.05),
-    // 材质生效时用极低透明白；否则回退到接近实色的浅白
+    // 材质生效时用半透明白；否则回退到接近实色的浅白。
+    //
+    // 0.48 是观感与可读性的平衡点：
+    // - 0.35 太透，深色壁纸透上来后深色文字对比度不足
+    // - 0.68 可读性够但整窗发白，材质感明显变弱（用户反馈"不好看"）
     color: AcrylicService.transparentBackground
-        ? Colors.white.withValues(alpha: 0.35)
+        ? Colors.white.withValues(alpha: 0.48)
         : Colors.white.withValues(alpha: 0.92),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(14),

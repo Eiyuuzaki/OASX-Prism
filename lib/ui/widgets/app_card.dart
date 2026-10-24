@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:oasx/service/acrylic_service.dart';
 import 'package:oasx/ui/impl/fluent/fluent_tokens.dart';
 import 'package:oasx/ui/style.dart';
 
@@ -127,9 +128,26 @@ class AppCard extends StatelessWidget {
   ) {
     final p = FluentPalette.of(context);
 
+    // 材质生效时卡片改用半透明白，让底下的 Acrylic/Mica 透上来。
+    //
+    // `FluentPalette.card` 是给「实色页面底」准备的纯白（#FFFFFF），
+    // 直接用在材质上就是一块死板的白板——设置页/资产页之前看起来
+    // 与主界面不搭，就是这个原因（主界面走的是 CardTheme 的 35% 白，
+    // 而 AppCard 绕过了 CardTheme 直接取 palette）。
+    //
+    // 深浅分开取：
+    // - 浅色 0x7A（48% 白）：与主题 cardTheme 一致。0x59(35%) 太透导致
+    //   深色文字对比度不足，0xAE(68%) 又整窗发白、材质感变弱
+    // - 深色 0x1F（12% 白）：**保持不变**。深色下高不透明度会发灰蒙，
+    //   低透明度白只提一点点亮，保持"黑玻璃上浮起一层"的观感
+    final translucent = AcrylicService.transparentBackground;
+    final cardColor = translucent
+        ? (p.isDark ? const Color(0x1FFFFFFF) : const Color(0x7AFFFFFF))
+        : p.card;
+
     final (Color bg, Color border) = switch (variant) {
-      AppCardVariant.elevated => (p.card, p.stroke),
-      AppCardVariant.filled => (p.card, Colors.transparent),
+      AppCardVariant.elevated => (cardColor, p.stroke),
+      AppCardVariant.filled => (cardColor, Colors.transparent),
       AppCardVariant.outlined => (Colors.transparent, p.stroke),
     };
 

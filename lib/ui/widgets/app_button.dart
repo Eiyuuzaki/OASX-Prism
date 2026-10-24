@@ -254,6 +254,12 @@ class _FluentButtonSurfaceState extends State<_FluentButtonSurface> {
   bool _hovering = false;
   bool _pressing = false;
 
+  /// WinUI 按钮按下时缩到 97%。
+  ///
+  /// 这是 Fluent 最标志性的手感之一：按下不只是变色，还有轻微"陷下去"
+  /// 的缩放。时长用 fast（100ms）——按下必须立刻有反馈，慢了会觉得钝。
+  static const double _pressedScale = 0.94;
+
   Color get _currentColor {
     if (!widget.enabled) return widget.baseColor;
     if (_pressing) {
@@ -287,20 +293,26 @@ class _FluentButtonSurfaceState extends State<_FluentButtonSurface> {
         onTapCancel:
             widget.enabled ? () => setState(() => _pressing = false) : null,
         onTap: widget.onPressed,
-        child: AnimatedContainer(
-          // decelerate 而非 standard：悬停反馈要立即响应，
-          // easeInOut 的开头延迟会让按钮显得"卡一下才亮"
-          duration: FluentMotion.hoverIn,
+        child: AnimatedScale(
+          duration: FluentMotion.fast,
           curve: FluentMotion.decelerate,
-          constraints: BoxConstraints(minHeight: widget.minHeight),
-          padding: EdgeInsets.symmetric(horizontal: widget.horizontalPadding),
-          decoration: BoxDecoration(
-            color: _currentColor,
-            borderRadius: widget.radius,
-            border: Border.all(color: widget.strokeColor, width: 1),
+          scale: _pressing && widget.enabled ? _pressedScale : 1.0,
+          child: AnimatedContainer(
+            // decelerate 而非 standard：悬停反馈要立即响应，
+            // easeInOut 的开头延迟会让按钮显得"卡一下才亮"
+            duration: FluentMotion.hoverIn,
+            curve: FluentMotion.decelerate,
+            constraints: BoxConstraints(minHeight: widget.minHeight),
+            padding:
+                EdgeInsets.symmetric(horizontal: widget.horizontalPadding),
+            decoration: BoxDecoration(
+              color: _currentColor,
+              borderRadius: widget.radius,
+              border: Border.all(color: widget.strokeColor, width: 1),
+            ),
+            alignment: Alignment.center,
+            child: widget.child,
           ),
-          alignment: Alignment.center,
-          child: widget.child,
         ),
       ),
     );

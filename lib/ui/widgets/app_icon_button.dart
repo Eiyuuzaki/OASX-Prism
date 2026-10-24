@@ -126,7 +126,12 @@ class _AppIconButtonState extends State<AppIconButton> {
         onTapUp: enabled ? (_) => setState(() => _pressing = false) : null,
         onTapCancel: enabled ? () => setState(() => _pressing = false) : null,
         onTap: widget.onPressed,
-        child: AnimatedContainer(
+        // 按下缩放：与 AppButton 一致的 WinUI 手感
+        child: AnimatedScale(
+          duration: FluentMotion.fast,
+          curve: FluentMotion.decelerate,
+          scale: (_pressing && enabled) ? 0.90 : 1.0,
+          child: AnimatedContainer(
           duration: FluentMotion.hoverIn,
           curve: FluentMotion.decelerate,
           width: size,
@@ -142,6 +147,7 @@ class _AppIconButtonState extends State<AppIconButton> {
                 size: widget.iconSize ?? (widget.dense ? 16 : 18),
                 color: fg,
               ),
+          ),
         ),
       ),
     );

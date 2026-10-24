@@ -6,6 +6,7 @@ import 'package:oasx/modules/settings/widgets/setting_card.dart';
 import 'package:oasx/modules/settings/widgets/setting_item.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/platform_utils.dart';
+import 'package:oasx/ui/ui.dart';
 
 class UserSettingsCard extends StatelessWidget {
   const UserSettingsCard({super.key});
@@ -83,7 +84,7 @@ class _LoginInputFieldState extends State<_LoginInputField> {
       _syncTextController();
       return SizedBox(
         width: 220,
-        child: TextField(
+        child: AppTextField(
           controller: _controller,
           focusNode: _focusNode,
           obscureText: widget.type == _LoginFieldType.password,
