@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:io' as io show pid;
 import 'dart:io' show Platform;
 
 import 'package:ffi/ffi.dart';
@@ -63,6 +64,22 @@ class AcrylicService {
     if (!_supported || !_pluginReady) return;
     final useDark = dark ?? false;
 
+    await _applyEffectInternal(dark: useDark);
+
+    // 玻璃边距在窗口尚未真正显示时设置可能不生效（DWM 只处理
+    // 已显示窗口的合成属性）。这里再补几轮，覆盖"窗口刚显示"的时机。
+    for (final delay in const [120, 400, 900]) {
+      Future.delayed(Duration(milliseconds: delay), () async {
+        if (!_supported || !_pluginReady) return;
+        if (!transparentBackground) return;
+        await _extendGlassIntoClientArea();
+      });
+    }
+  }
+
+  static Future<void> _applyEffectInternal({required bool dark}) async {
+    final useDark = dark;
+
     // 1) Mica Alt（tabbed）：DWM 托管 + 壁纸透出明显，首选。
     try {
       await Window.setEffect(effect: WindowEffect.tabbed, dark: useDark);
@@ -110,21 +127,19 @@ class AcrylicService {
   ///
   /// 用 dart:ffi 直接调，因为 flutter_acrylic 在部分 Win11 构建上
   /// 这一步会被它自己的 ACCENT_DISABLED 前置调用抵消。
+  ///
+  /// **必须按进程 ID 精确找窗口**：`FLUTTER_RUNNER_WIN32_WINDOW` 类名
+  /// 对所有 Flutter 应用都相同，单纯 FindWindowW 会拿到别的进程的窗口
+  /// （例如同时开着的另一个 Flutter 应用），把玻璃边距设到别人身上。
   static Future<void> _extendGlassIntoClientArea() async {
     if (!Platform.isWindows) return;
     try {
       final user32 = DynamicLibrary.open('user32.dll');
       final dwmapi = DynamicLibrary.open('dwmapi.dll');
 
-      // 找本进程的 Flutter 窗口
-      final findWindow = user32.lookupFunction<
-          IntPtr Function(Pointer<Utf16>, Pointer<Utf16>),
-          int Function(Pointer<Utf16>, Pointer<Utf16>)>('FindWindowW');
-      final className = 'FLUTTER_RUNNER_WIN32_WINDOW'.toNativeUtf16();
-      final hwnd = findWindow(className, nullptr);
-      calloc.free(className);
+      final hwnd = _findOwnWindow(user32);
       if (hwnd == 0) {
-        debugPrint('AcrylicService: FindWindowW 未找到窗口');
+        debugPrint('AcrylicService: 未找到本进程窗口');
         return;
       }
 
@@ -138,11 +153,72 @@ class AcrylicService {
       margins.ref.cyBottomHeight = -1;
       final hr = extendFrame(hwnd, margins);
       calloc.free(margins);
-      debugPrint('AcrylicService: DwmExtendFrameIntoClientArea hr=0x'
-          '${hr.toRadixString(16)}');
+      debugPrint('AcrylicService: DwmExtendFrameIntoClientArea hwnd=$hwnd '
+          'hr=0x${hr.toRadixString(16)}');
     } catch (e) {
       debugPrint('AcrylicService: extend glass failed: $e');
     }
+  }
+
+  /// 按当前进程 ID 枚举顶层窗口，找类名为 Flutter runner 的那个。
+  static int _findOwnWindow(DynamicLibrary user32) {
+    final getWindowThreadProcessId = user32.lookupFunction<
+        Uint32 Function(IntPtr, Pointer<Int32>),
+        int Function(int, Pointer<Int32>)>('GetWindowThreadProcessId');
+    final getClassName = user32.lookupFunction<
+        Int32 Function(IntPtr, Pointer<Utf16>, Int32),
+        int Function(int, Pointer<Utf16>, int)>('GetClassNameW');
+
+    final ownPid = io.pid;
+    int? found;
+
+    // EnumWindows 的回调签名
+    final enumWindows = user32.lookupFunction<
+        Int32 Function(
+            Pointer<NativeFunction<Int32 Function(IntPtr, IntPtr)>>, IntPtr),
+        int Function(
+            Pointer<NativeFunction<Int32 Function(IntPtr, IntPtr)>>,
+            int)>('EnumWindows');
+
+    final pidPtr = calloc<Int32>();
+    final classBuf = calloc<Uint16>(256);
+
+    final callback = NativeCallable<
+        Int32 Function(IntPtr, IntPtr)>.isolateLocal(
+      (int hwnd, int lParam) {
+        pidPtr.value = 0;
+        getWindowThreadProcessId(hwnd, pidPtr);
+        if (pidPtr.value != ownPid) return 1; // 继续枚举
+
+        // 不按 IsWindowVisible 过滤：applyEffect 可能在窗口 show 之前
+        // 执行（initialize 之后立即调用），此时窗口尚不可见但已存在。
+        // 只按类名 + 进程 ID 匹配即可。
+
+        // 读取类名
+        for (var i = 0; i < 256; i++) {
+          classBuf[i] = 0;
+        }
+        final len = getClassName(hwnd, classBuf.cast<Utf16>(), 256);
+        if (len <= 0) return 1;
+        final name = classBuf.cast<Utf16>().toDartString();
+        if (name == 'FLUTTER_RUNNER_WIN32_WINDOW') {
+          found = hwnd;
+          return 0; // 停止枚举
+        }
+        return 1;
+      },
+      // 回调返回值不是 void/Handle/Pointer，必须给"异常返回值"
+      exceptionalReturn: 0,
+    );
+
+    try {
+      enumWindows(callback.nativeFunction, 0);
+    } finally {
+      callback.close();
+      calloc.free(pidPtr);
+      calloc.free(classBuf);
+    }
+    return found ?? 0;
   }
 
   /// 主题切换时重新应用材质（明暗分支变化）。
