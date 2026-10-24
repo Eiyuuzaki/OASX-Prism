@@ -125,6 +125,16 @@ ThemeData get lightTheme => ThemeData(
       ),
     ),
   ),
+
+  // FAB（服务器页的部署按钮）：强调色圆钮。WinUI 没有对应物，
+  // 取「强调色 + 圆形」的精神与整体观感保持一致；底色由主题 seedColor 决定。
+  floatingActionButtonTheme: FloatingActionButtonThemeData(
+    elevation: 4,
+    focusElevation: 4,
+    hoverElevation: 6,
+    highlightElevation: 8,
+    shape: const CircleBorder(),
+  ),
 );
 
 // AMOLED 纯黑深色主题：设置页可切换（OLED 省电 + 对比度拉满）
@@ -140,6 +150,15 @@ ThemeData get amoledDarkTheme => darkTheme.copyWith(
       borderRadius: BorderRadius.circular(16),
       side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
     ),
+  ),
+
+  // FAB：同浅色，深色下由 Material 自动取 seedColor 的深色变体。
+  floatingActionButtonTheme: FloatingActionButtonThemeData(
+    elevation: 4,
+    focusElevation: 4,
+    hoverElevation: 6,
+    highlightElevation: 8,
+    shape: const CircleBorder(),
   ),
 );
 

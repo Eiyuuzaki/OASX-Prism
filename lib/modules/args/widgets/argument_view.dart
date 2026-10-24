@@ -139,38 +139,31 @@ class _ArgumentViewState extends State<ArgumentView> {
           onChanged: _scheduleIntegerChange,
           enabled: !isLocked,
         ),
-      'enum' => DropdownButtonFormField<String>(
-          initialValue: model.value.toString(),
-          isExpanded: true,
-          menuMaxHeight: Get.height * 0.5,
-          decoration: InputDecoration(errorText: errorText),
-          items: model.enumEnum!
-              .map<DropdownMenuItem<String>>(
-                (e) => DropdownMenuItem(
-                  value: e.toString(),
-                  child: Text(
-                    e.toString().tr,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+      'enum' => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppDropdown<String>(
+              value: model.value.toString(),
+              maxWidth: double.infinity,
+              enabled: !isLocked,
+              items: model.enumEnum!
+                  .map(
+                    (e) =>
+                        AppDropdownItem(value: e.toString(), label: e.toString().tr),
+                  )
+                  .toList(),
+              onChanged: onEnumChanged,
+            ),
+            // 表单校验错误，样式与 multi_enum 分支一致
+            if (errorText != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  errorText,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-              )
-              .toList(),
-          selectedItemBuilder: (context) => model.enumEnum!
-              .map<Widget>(
-                (e) => Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    e.toString().tr,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: isLocked ? null : onEnumChanged,
+              ),
+          ],
         ),
       'multi_enum' => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
