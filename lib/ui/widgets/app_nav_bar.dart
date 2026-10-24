@@ -98,7 +98,7 @@ class AppNavBar extends StatelessWidget {
     return Container(
       width: appNavBarWidth(),
       color: materialActive ? Colors.transparent : paneColor,
-      foregroundDecoration: BoxDecoration(
+      foregroundDecoration: const BoxDecoration(
         border: Border(
           right: BorderSide(color: dividerColor, width: 1),
         ),
@@ -129,7 +129,27 @@ class AppNavBar extends StatelessWidget {
 
 /// WinUI NavigationView 紧凑模式的单个导航项。
 ///
-/// 结构：左侧 12px 指示条槽位 + 右侧圆角高亮块（图标在上、文字在下）。
+/// 结构（按用户要求调整过，与 LLT 原版有差异）：
+///
+/// ```
+/// ┌──────────────────┐  ← 卡片接近正方形（76×72）
+/// │ ▌                │  ← 指示条在**卡片内部**左侧
+/// │       🏠         │
+/// │      主页        │  ← 未选中：图标 + 文字
+/// └──────────────────┘     选中：文字塌缩，图标居中
+/// ```
+///
+/// ## 与 LLT 原版的差异
+///
+/// LLT 实测：卡片 94×85、指示条在卡片**外面**（x=0，与卡片相距 16px）。
+/// 我们按用户要求改为「指示条进卡片内 + 卡片正方形」：
+/// - 指示条放在卡片内部左边缘，视觉上是一个整体的高亮单元
+/// - 卡片宽高比控制在 1.0 左右（76×72），不再是被拉长的矩形
+///
+/// ## 选中动画（照搬 LLT 规格）
+///
+/// 160ms：文字区高度塌缩 + 淡出（图标因此升到垂直居中），
+/// 指示条与白色卡片底同时淡入。
 class _FluentNavItem extends StatefulWidget {
   const _FluentNavItem({
     required this.destination,
@@ -148,22 +168,27 @@ class _FluentNavItem extends StatefulWidget {
 class _FluentNavItemState extends State<_FluentNavItem> {
   bool _hovering = false;
 
+  /// LLT 的动画时长：160ms。
+  static const Duration _anim = Duration(milliseconds: 160);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final p = FluentPalette.of(context);
     final accent = theme.colorScheme.primary;
+    final selected = widget.selected;
 
-    // 选中：高亮块 + 主色图标文字；悬停：更浅的高亮块
+    // 选中底色：LLT 用**接近纯白的圆角块**（放大截图实测 RGB≈250），
+    // 不是主色淡底——那个白色块让选中项像"浮起来的一张卡片"。
     final Color fill;
-    if (widget.selected) {
-      fill = p.rowHover;
+    if (selected) {
+      fill = p.isDark ? const Color(0xFF2D2D2D) : const Color(0xFFFAFAFA);
     } else if (_hovering) {
       fill = p.rowPressed;
     } else {
       fill = Colors.transparent;
     }
-    final fg = widget.selected ? accent : p.textSecondary;
+    final fg = selected ? accent : p.textSecondary;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -172,62 +197,76 @@ class _FluentNavItemState extends State<_FluentNavItem> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
-        child: SizedBox(
-          height: 72,
-          child: Row(
-            children: [
-              // 选中指示条槽位：贴左边缘的 4×20 圆角竖条
-              SizedBox(
-                width: 12,
-                child: Center(
-                  child: AnimatedContainer(
-                    duration: FluentMotion.hoverIn,
-                    curve: FluentMotion.decelerate,
-                    width: 4,
-                    height: widget.selected ? 20 : 0,
-                    decoration: BoxDecoration(
-                      color: accent,
-                      borderRadius: BorderRadius.circular(2),
+        child: Padding(
+          // 卡片四周留白，让它成为独立的"正方形块"
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: AnimatedContainer(
+            duration: _anim,
+            curve: Curves.easeOut,
+            // 正方形卡片：宽高接近 1:1（高度由外层固定，宽度撑满侧栏减留白）
+            height: 72,
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Stack(
+              children: [
+                // 指示条：放在**卡片内部**左侧，垂直居中
+                Positioned(
+                  left: 4,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: AnimatedOpacity(
+                      duration: _anim,
+                      opacity: selected ? 1 : 0,
+                      child: Container(
+                        width: 3,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: accent,
+                          borderRadius: BorderRadius.circular(1.5),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // 高亮块 + 图标/文字
-              Expanded(
-                child: AnimatedContainer(
-                  duration: FluentMotion.hoverIn,
-                  curve: FluentMotion.decelerate,
-                  margin: const EdgeInsets.only(right: 6, top: 4, bottom: 4),
-                  decoration: BoxDecoration(
-                    color: fill,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                // 图标 + 文字，整体居中
+                Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(widget.destination.icon, size: 24, color: fg),
-                      const SizedBox(height: 6),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Text(
-                          widget.destination.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontSize: 11,
-                            color: fg,
-                            fontWeight: widget.selected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
+                      // 文字区：选中时高度塌缩 + 淡出（图标因此居中）
+                      AnimatedContainer(
+                        duration: _anim,
+                        curve: Curves.easeOut,
+                        height: selected ? 0 : 15,
+                        child: AnimatedOpacity(
+                          duration: _anim,
+                          opacity: selected ? 0 : 1,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              widget.destination.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                // LLT 用 FontSize 10
+                                fontSize: 10,
+                                color: fg,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

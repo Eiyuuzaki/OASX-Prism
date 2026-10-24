@@ -248,6 +248,15 @@ class WindowService extends GetxService with WindowListener {
   @override
   void onWindowUnmaximize() => _reapplyMaterial();
 
+  /// 窗口获得焦点时补设材质。
+  ///
+  /// **这是玻璃边距能生效的关键时机**：`DwmExtendFrameIntoClientArea`
+  /// 只对已进入 DWM 合成树的窗口有效，而窗口在真正显示前还没进去。
+  /// 启动时 applyEffect 早于显示执行，固定延迟重试也可能赶不上；
+  /// 窗口第一次获得焦点必然发生在显示之后，挂在这里最可靠。
+  @override
+  void onWindowFocus() => _reapplyMaterial();
+
   void _reapplyMaterial() {
     if (!PlatformUtils.isDesktop) return;
     final themeService = Get.isRegistered<ThemeService>()

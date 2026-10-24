@@ -66,73 +66,48 @@ class AcrylicService {
 
     await _applyEffectInternal(dark: useDark);
 
-    // 玻璃边距在窗口尚未真正显示时设置可能不生效（DWM 只处理
-    // 已显示窗口的合成属性）。这里再补几轮，覆盖"窗口刚显示"的时机。
+    // 窗口真正显示之后 DWM 才处理合成属性，补几轮覆盖启动期。
     for (final delay in const [120, 400, 900]) {
       Future.delayed(Duration(milliseconds: delay), () async {
         if (!_supported || !_pluginReady) return;
         if (!transparentBackground) return;
-        await _extendGlassIntoClientArea();
+        await _applyDwmBackdrop(dark: useDark);
       });
     }
   }
 
+  /// 应用材质。
+  ///
+  /// ## 正确顺序（实测踩坑记录）
+  ///
+  /// 1. **先 `SetWindowCompositionAttribute(ACCENT_DISABLED)`**——
+  ///    这一步让 DWM 重置合成状态。跳过它直接设 SYSTEMBACKDROP，
+  ///    属性查得到但不会重绘，表现为「完全没材质」。
+  /// 2. `DwmExtendFrameIntoClientArea(MARGINS{-1})` —— 客户区交给 DWM
+  /// 3. `DwmSetWindowAttribute(SYSTEMBACKDROP_TYPE, 4)`
+  /// 4. `DwmSetWindowAttribute(USE_IMMERSIVE_DARK_MODE)`
+  ///
+  /// 前两步既是 flutter_acrylic 内部做的，也是它唯一不可替代的部分，
+  /// 所以继续借它的 `setEffect`；后两步用 FFI 补（它在部分 Win11
+  /// 构建上会漏掉或顺序颠倒）。
   static Future<void> _applyEffectInternal({required bool dark}) async {
-    final useDark = dark;
-
-    // 1) Mica Alt（tabbed）：DWM 托管 + 壁纸透出明显，首选。
     try {
-      await Window.setEffect(effect: WindowEffect.tabbed, dark: useDark);
-      transparentBackground = true;
-      await _extendGlassIntoClientArea();
-      debugPrint('AcrylicService: tabbed/mica-alt (dark=$useDark) OK');
-      return;
+      // 1) 借插件的 setEffect：内部会做 ACCENT_DISABLED 重置 + MARGINS + backdrop
+      await Window.setEffect(effect: WindowEffect.tabbed, dark: dark);
+      // 2) FFI 再补一遍 DWM 属性，确保落地
+      final ok = await _applyDwmBackdrop(dark: dark);
+      transparentBackground = ok;
+      debugPrint('AcrylicService: tabbed/mica-alt applied (dark=$dark)');
     } catch (e) {
-      debugPrint('AcrylicService: tabbed failed: $e');
+      debugPrint('AcrylicService: tabbed failed: $e → 尝试纯 DWM 路径');
+      final ok = await _applyDwmBackdrop(dark: dark);
+      transparentBackground = ok;
     }
-
-    // 2) Mica：更含蓄，后备。
-    try {
-      await Window.setEffect(effect: WindowEffect.mica, dark: useDark);
-      transparentBackground = true;
-      await _extendGlassIntoClientArea();
-      debugPrint('AcrylicService: mica (dark=$useDark) OK');
-      return;
-    } catch (e) {
-      debugPrint('AcrylicService: mica failed: $e');
-    }
-
-    // 3) Acrylic：质感最强但最小化后会丢，最后后备。
-    final tint = useDark
-        ? const Color(0xCC0A0A0C)
-        : const Color(0x66FFFFFF);
-    try {
-      await Window.setEffect(effect: WindowEffect.acrylic, color: tint);
-      transparentBackground = true;
-      debugPrint('AcrylicService: acrylic tint=0x'
-          '${tint.toARGB32().toRadixString(16)} (dark=$useDark) OK');
-      return;
-    } catch (e) {
-      debugPrint('AcrylicService: acrylic failed: $e');
-    }
-
-    debugPrint('AcrylicService: all effects failed, keep opaque background');
-    transparentBackground = false;
   }
 
-  /// 显式设置 DWM 玻璃边距，让客户区真正透明。
-  ///
-  /// `MARGINS{-1,-1,-1,-1}` 是「sheet of glass」：整窗交给 DWM 合成，
-  /// Flutter 画的内容叠在上面，未绘制处透出 DWM 背景（Mica/Tabbed）。
-  ///
-  /// 用 dart:ffi 直接调，因为 flutter_acrylic 在部分 Win11 构建上
-  /// 这一步会被它自己的 ACCENT_DISABLED 前置调用抵消。
-  ///
-  /// **必须按进程 ID 精确找窗口**：`FLUTTER_RUNNER_WIN32_WINDOW` 类名
-  /// 对所有 Flutter 应用都相同，单纯 FindWindowW 会拿到别的进程的窗口
-  /// （例如同时开着的另一个 Flutter 应用），把玻璃边距设到别人身上。
-  static Future<void> _extendGlassIntoClientArea() async {
-    if (!Platform.isWindows) return;
+  /// 设置 DWM backdrop。返回是否成功。
+  static Future<bool> _applyDwmBackdrop({required bool dark}) async {
+    if (!Platform.isWindows) return false;
     try {
       final user32 = DynamicLibrary.open('user32.dll');
       final dwmapi = DynamicLibrary.open('dwmapi.dll');
@@ -140,9 +115,10 @@ class AcrylicService {
       final hwnd = _findOwnWindow(user32);
       if (hwnd == 0) {
         debugPrint('AcrylicService: 未找到本进程窗口');
-        return;
+        return false;
       }
 
+      // 1) 玻璃边距：整窗交给 DWM 合成，未绘制处透出材质
       final extendFrame = dwmapi.lookupFunction<
           Int32 Function(IntPtr, Pointer<MARGINS>),
           int Function(int, Pointer<MARGINS>)>('DwmExtendFrameIntoClientArea');
@@ -151,12 +127,32 @@ class AcrylicService {
       margins.ref.cxRightWidth = -1;
       margins.ref.cyTopHeight = -1;
       margins.ref.cyBottomHeight = -1;
-      final hr = extendFrame(hwnd, margins);
+      final hrFrame = extendFrame(hwnd, margins);
       calloc.free(margins);
-      debugPrint('AcrylicService: DwmExtendFrameIntoClientArea hwnd=$hwnd '
-          'hr=0x${hr.toRadixString(16)}');
+
+      final setAttr = dwmapi.lookupFunction<
+          Int32 Function(IntPtr, Uint32, Pointer<Int32>, Uint32),
+          int Function(int, int, Pointer<Int32>, int)>('DwmSetWindowAttribute');
+
+      // 2) SYSTEMBACKDROP_TYPE = 4（DWMSBT_TABBEDWINDOW，壁纸透出最明显）
+      final backdrop = calloc<Int32>()..value = 4;
+      final hrBackdrop = setAttr(hwnd, 38, backdrop, 4);
+      calloc.free(backdrop);
+
+      // 3) 明暗变体
+      final darkMode = calloc<Int32>()..value = dark ? 1 : 0;
+      final hrDark = setAttr(hwnd, 20, darkMode, 4);
+      calloc.free(darkMode);
+
+      debugPrint('AcrylicService: DWM backdrop hwnd=$hwnd '
+          'frame=0x${hrFrame.toRadixString(16)} '
+          'backdrop=0x${hrBackdrop.toRadixString(16)} '
+          'dark=0x${hrDark.toRadixString(16)} (dark=$dark)');
+
+      return hrFrame == 0 && hrBackdrop == 0;
     } catch (e) {
-      debugPrint('AcrylicService: extend glass failed: $e');
+      debugPrint('AcrylicService: DWM backdrop failed: $e');
+      return false;
     }
   }
 
