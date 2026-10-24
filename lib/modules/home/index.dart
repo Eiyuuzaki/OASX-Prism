@@ -81,7 +81,7 @@ class _HomeViewState extends State<HomeView> {
                       const SizedBox(
                         width: 36,
                         height: 36,
-                        child: CircularProgressIndicator(),
+                        child: AppProgressIndicator.circular(),
                       ),
                       const SizedBox(height: 14),
                       Text(

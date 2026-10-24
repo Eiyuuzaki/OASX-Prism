@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:oasx/modules/home/controllers/error_records_controller.dart';
 import 'package:oasx/modules/home/models/error_record_models.dart';
+import 'package:oasx/ui/ui.dart';
 
 /// Saved scenes are isolated to the currently selected account.
 class ErrorRecordsPanel extends StatefulWidget {
@@ -181,7 +182,7 @@ class _ErrorRecordsPanelState extends State<ErrorRecordsPanel> {
       children: [
         if (_controller.error != null)
           _messageBanner(context, _controller.error!),
-        if (_controller.loading) const LinearProgressIndicator(minHeight: 2),
+        if (_controller.loading) const AppProgressIndicator.linear(),
         Expanded(
           child: ListView.separated(
             key: PageStorageKey('error-record-list-${_controller.scriptName}'),
@@ -273,7 +274,7 @@ class _ErrorRecordsPanelState extends State<ErrorRecordsPanel> {
         ),
         const SizedBox(height: 8),
         if (_controller.detailLoading && detail != null)
-          const LinearProgressIndicator(minHeight: 2),
+          const AppProgressIndicator.linear(),
         Expanded(
           child: detail == null
               ? _ErrorPlaceholder(
@@ -543,7 +544,7 @@ class _ErrorPlaceholder extends StatelessWidget {
               const SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: AppProgressIndicator.circular(strokeWidth: 2),
               )
             else
               Icon(

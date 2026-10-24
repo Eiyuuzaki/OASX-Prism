@@ -5,6 +5,7 @@ import 'package:oasx/service/app_update/models/app_update_plan.dart';
 import 'package:oasx/service/app_update_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:styled_widget/styled_widget.dart';
+import 'package:oasx/ui/ui.dart';
 
 /// Renders the shared app update dialog.
 class AppUpdateDialog extends StatelessWidget {
@@ -50,7 +51,7 @@ class AppUpdateDialog extends StatelessWidget {
     final progress = service.downloadProgress.value;
     final hasKnownTotal = progress >= 0;
     return <Widget>[
-      LinearProgressIndicator(value: hasKnownTotal ? progress : null),
+      AppProgressIndicator.linear(value: hasKnownTotal ? progress : null),
       Text(service.downloadProgressLabel.value),
     ].toColumn(
       crossAxisAlignment: CrossAxisAlignment.start,

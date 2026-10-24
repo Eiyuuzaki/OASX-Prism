@@ -47,7 +47,7 @@ class ResourceHistoryDialog extends StatelessWidget {
                 const AppDivider(),
                 Expanded(
                   child: c.loading.value && c.points.isEmpty
-                      ? const Center(child: CircularProgressIndicator())
+                      ? const Center(child: AppProgressIndicator.circular())
                       : c.points.isEmpty
                           ? Center(
                               child: Text(I18n.resource_no_history.tr,
@@ -86,25 +86,21 @@ class _RangeBar extends StatelessWidget {
         children: [
           for (final d in const [7, 30, 90])
             if (span == null || canPick || d <= (span.totalDays))
-              ChoiceChip(
-                label: Text('最近 $d 天'),
+              AppChip(
+                label: '最近 $d 天',
                 selected: controller.selectedDays.value == d &&
                     controller.customStart.value.isEmpty,
-                onSelected: canPick || d == controller.selectedDays.value
-                    ? (_) => controller.selectDays(d)
+                onTap: canPick || d == controller.selectedDays.value
+                    ? () => controller.selectDays(d)
                     : null,
-                labelStyle: theme.textTheme.labelSmall,
               ),
           if (span != null && canPick)
-            ActionChip(
-              avatar: const Icon(Icons.date_range, size: 14),
-              label: Text(
-                controller.customStart.value.isEmpty
-                    ? '自选范围'
-                    : '${controller.customStart.value} ~ ${controller.customEnd.value}',
-                style: theme.textTheme.labelSmall,
-              ),
-              onPressed: () => _pickRange(context),
+            AppChip(
+              icon: Icons.date_range,
+              label: controller.customStart.value.isEmpty
+                  ? '自选范围'
+                  : '${controller.customStart.value} ~ ${controller.customEnd.value}',
+              onTap: () => _pickRange(context),
             ),
           if (span != null)
             Padding(

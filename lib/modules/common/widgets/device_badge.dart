@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
+import 'package:oasx/ui/ui.dart';
 
 /// 标题栏里的设备徽标：显示当前连接的安卓实例，点击可切换。
 ///
@@ -123,7 +124,7 @@ class _DeviceBadgeState extends State<DeviceBadge> {
         height: 16,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 8),
-          child: CircularProgressIndicator(strokeWidth: 2),
+          child: AppProgressIndicator.circular(strokeWidth: 2),
         ),
       );
     }

@@ -10,6 +10,7 @@ import 'package:oasx/views/resource/resource_view.dart';
 import 'package:oasx/modules/home/widgets/task_catalog_panel.dart';
 import 'package:oasx/modules/home/widgets/task_status_panel.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 class ActiveConfigPanel extends StatelessWidget {
   const ActiveConfigPanel({
@@ -90,11 +91,10 @@ class ActiveConfigPanel extends StatelessWidget {
                 runSpacing: 8,
                 children: tabs
                     .map(
-                      (tab) => ChoiceChip(
-                        label: Text(_tabLabel(tab)),
-                        showCheckmark: false,
+                      (tab) => AppChip(
+                        label: _tabLabel(tab),
                         selected: currentTab == tab,
-                        onSelected: (_) => onChangeTab(tab),
+                        onTap: () => onChangeTab(tab),
                       ),
                     )
                     .toList(),

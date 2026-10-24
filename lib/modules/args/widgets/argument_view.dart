@@ -111,7 +111,7 @@ class _ArgumentViewState extends State<ArgumentView> {
         _argsController.fieldError(widget.getGroupName(), model.title);
     final isLocked = _isProtectedImmediateScheduleField;
     final child = switch (model.type) {
-      'boolean' => Checkbox(
+      'boolean' => AppCheckbox(
           value: model.value,
           onChanged: isLocked ? null : onCheckboxChanged,
         ).alignment(Alignment.centerLeft),

@@ -102,7 +102,7 @@ void killServer() {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: AppProgressIndicator.circular(strokeWidth: 2),
                   )
                 : Text(I18n.confirm.tr),
           ),
@@ -127,7 +127,7 @@ class AutoScriptDialogContent extends StatelessWidget {
               Expanded(
                 child: Text(item, maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
-              Checkbox(
+              AppCheckbox(
                 value: scriptService.autoScriptList.contains(item),
                 onChanged: (nv) => scriptService.updateAutoScript(item, nv),
               ),

@@ -7,6 +7,7 @@ import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/api/config_transfer_models.dart';
 import 'package:oasx/modules/common/widgets/config_transfer_dialog.dart';
 import 'package:oasx/service/script_service.dart';
+import 'package:oasx/ui/ui.dart';
 
 class TaskParameterPanel extends StatefulWidget {
   const TaskParameterPanel({
@@ -104,7 +105,7 @@ class _TaskParameterPanelState extends State<TaskParameterPanel> {
               future: future,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: AppProgressIndicator.circular());
                 }
                 if (snapshot.hasError) {
                   return Center(

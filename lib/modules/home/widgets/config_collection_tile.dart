@@ -8,6 +8,7 @@ import 'package:oasx/modules/home/widgets/config_collection_task_preview.dart';
 import 'package:oasx/modules/common/widgets/config_transfer_dialog.dart';
 import 'package:oasx/api/config_transfer_models.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 class ConfigCollectionTile extends StatelessWidget {
   const ConfigCollectionTile({
@@ -76,13 +77,12 @@ class ConfigCollectionTile extends StatelessWidget {
                       SizedBox(
                         width: 36,
                         height: 36,
-                        child: Checkbox(
+                        child: AppCheckbox(
                           value: isLinked,
                           onChanged: (value) => controller.setScriptLinked(
                             script.name,
                             value ?? false,
                           ),
-                          visualDensity: VisualDensity.compact,
                         ),
                       ),
                       const SizedBox(width: 2),
@@ -227,7 +227,7 @@ class _DragCopyLoadingMask extends StatelessWidget {
           child: SizedBox(
             width: 24,
             height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2.5),
+            child: AppProgressIndicator.circular(strokeWidth: 2.5),
           ),
         ),
       ),

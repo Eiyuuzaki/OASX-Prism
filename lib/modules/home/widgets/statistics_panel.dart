@@ -410,7 +410,7 @@ class _ChartCard extends StatelessWidget {
                 const _InlineEmpty(icon: Icons.bar_chart_rounded)
               else ...[
                 if (loading)
-                  const LinearProgressIndicator(minHeight: 2),
+                  const AppProgressIndicator.linear(),
                 Opacity(
                   opacity: loading ? 0.4 : 1,
                   child: IgnorePointer(
@@ -498,7 +498,7 @@ class _StatisticsPlaceholder extends StatelessWidget {
                 child: SizedBox(
                   width: 28,
                   height: 28,
-                  child: CircularProgressIndicator(strokeWidth: 2.6),
+                  child: AppProgressIndicator.circular(strokeWidth: 2.6),
                 ),
               )
             else

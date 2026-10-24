@@ -81,7 +81,7 @@ class _Toolbar extends StatelessWidget {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        child: AppProgressIndicator.circular(strokeWidth: 2))
                     : null,
               ),
               const SizedBox(width: 4),

@@ -276,7 +276,7 @@ class ArgsDraftBar extends StatelessWidget {
                   ? const SizedBox(
                       width: 14,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: AppProgressIndicator.circular(strokeWidth: 2),
                     )
                   : const Icon(Icons.save_rounded),
               label: Text(I18n.argsSaveChanges.tr),

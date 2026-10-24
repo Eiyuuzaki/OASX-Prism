@@ -43,7 +43,7 @@ class ResourceView extends StatelessWidget {
       tag: tag,
       builder: (c) {
         if (c.loading.value && c.day.value.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: AppProgressIndicator.circular());
         }
         final scheme = Theme.of(context).colorScheme;
         // 不套页面级背景色：本页嵌在侧栏 Card 里，Card 已有自己的底，

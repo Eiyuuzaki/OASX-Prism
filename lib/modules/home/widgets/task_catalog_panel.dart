@@ -95,7 +95,7 @@ class _TaskCatalogPanelState extends State<TaskCatalogPanel> {
             future: _menuFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: AppProgressIndicator.circular());
               }
               if (snapshot.hasError) {
                 return Center(
@@ -507,10 +507,7 @@ class _EnableIcon extends StatelessWidget {
         height: 22,
         child: Padding(
           padding: const EdgeInsets.all(2),
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          child: AppProgressIndicator.circular(strokeWidth: 2),
         ),
       );
     }

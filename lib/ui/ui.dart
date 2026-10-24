@@ -43,6 +43,10 @@ export 'widgets/app_segmented_button.dart';
 export 'widgets/app_icon_button.dart';
 export 'widgets/app_divider.dart';
 export 'widgets/app_info_bar.dart';
+export 'widgets/app_checkbox.dart';
+export 'widgets/app_radio.dart';
+export 'widgets/app_chip.dart';
+export 'widgets/app_progress_indicator.dart';
 export 'widgets/app_page_header.dart';
 
 // 平台实现的设计令牌（业务代码一般不需要直接用，

@@ -9,6 +9,7 @@ import 'package:oasx/modules/common/widgets/appbar.dart';
 import 'package:oasx/modules/log/log_widget.dart';
 import 'package:oasx/modules/server/controllers/server_controller.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 class ServerView extends StatelessWidget {
   const ServerView({super.key});
@@ -145,10 +146,7 @@ class ServerView extends StatelessWidget {
                 ? const SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 3,
-                    ),
+                    child: AppProgressIndicator.circular(strokeWidth: 3),
                   )
                 : const Icon(Icons.auto_mode_rounded),
           ),

@@ -5,6 +5,7 @@ import 'package:oasx/service/script_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/modules/args/index.dart';
 import 'config_transfer_dialog.dart';
+import 'package:oasx/ui/ui.dart';
 
 enum _AddConfigAction { importJson }
 
@@ -128,7 +129,7 @@ Future<String?> showAddConfigDialog(
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: AppProgressIndicator.circular(strokeWidth: 2),
                     )
                   : Text(I18n.confirm.tr),
             );

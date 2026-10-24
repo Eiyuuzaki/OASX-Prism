@@ -5,6 +5,7 @@ import 'package:oasx/api/config_transfer_api.dart';
 import 'package:oasx/api/config_transfer_models.dart';
 import 'package:oasx/service/config_transfer_files.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 typedef ConfigImportGuard = String? Function();
 
@@ -154,7 +155,7 @@ class _ConfigJsonImportDialogState extends State<ConfigJsonImportDialog> {
           child: _busy
               ? const SizedBox.square(
                   dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: AppProgressIndicator.circular(strokeWidth: 2),
                 )
               : Text(I18n.configJsonImportAction.tr),
         ),
@@ -285,7 +286,7 @@ class _ConfigJsonExportDialogState extends State<_ConfigJsonExportDialog> {
           child: _busy
               ? const SizedBox.square(
                   dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: AppProgressIndicator.circular(strokeWidth: 2),
                 )
               : Text(I18n.configJsonSave.tr),
         ),

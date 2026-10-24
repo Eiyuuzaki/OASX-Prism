@@ -36,7 +36,7 @@ extension _HomeViewActions on _HomeViewState {
                 return const SizedBox(
                   width: 36,
                   height: 36,
-                  child: CircularProgressIndicator(strokeWidth: 2.6),
+                  child: AppProgressIndicator.circular(strokeWidth: 2.6),
                 );
               }
               return Icon(

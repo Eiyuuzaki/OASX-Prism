@@ -6,6 +6,7 @@ import 'package:oasx/api/update_info_model.dart';
 import 'package:oasx/api/api_client.dart';
 
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 class UpdaterView extends StatelessWidget {
   const UpdaterView({Key? key}) : super(key: key);
@@ -17,7 +18,7 @@ class UpdaterView extends StatelessWidget {
         builder:
             (BuildContext context, AsyncSnapshot<UpdateInfoModel> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
+            return const AppProgressIndicator.circular();
           } else if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
           } else {
