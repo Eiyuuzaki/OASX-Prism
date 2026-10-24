@@ -124,8 +124,11 @@ class AcrylicService {
       // SYSTEMBACKDROP_TYPE 设得再对也不画材质。实测：加上这一步之前，
       // 材质时有时无（属性查得到 =4、像素纯色）；加上之后稳定生效。
       //
-      // `window_manager` 的 titleBarStyle.hidden 只处理 WM_NCCALCSIZE，
-      // 没有真正去掉样式位，这里补一刀。
+      // **只去 WS_CAPTION，保留 WS_THICKFRAME**：后者是拖边拉伸的依据。
+      // 由于窗口用 TitleBarStyle.normal，客户区等于窗口矩形，没有
+      // 额外 8px 非客户区（白边的成因是 hidden 模式为拉伸热区缩进
+      // 客户区，见 window_service 的说明），所以保留 THICKFRAME 也不会
+      // 带回白边。比例由 windowManager.setAspectRatio 锁定，缩放等比。
       final getWindowLong = user32.lookupFunction<
           IntPtr Function(IntPtr, Int32),
           int Function(int, int)>('GetWindowLongPtrW');
@@ -134,12 +137,11 @@ class AcrylicService {
           int Function(int, int, int)>('SetWindowLongPtrW');
       const gwlStyle = -16;
       const wsCaption = 0x00C00000;
-      const wsThickFrame = 0x00040000;
       final style = getWindowLong(hwnd, gwlStyle);
-      final newStyle = style & ~wsCaption & ~wsThickFrame;
+      final newStyle = style & ~wsCaption;
       if (newStyle != style) {
         setWindowLong(hwnd, gwlStyle, newStyle);
-        debugPrint('AcrylicService: 去掉 WS_CAPTION/WS_THICKFRAME '
+        debugPrint('AcrylicService: 去掉 WS_CAPTION '
             '(0x${style.toRadixString(16)} → 0x${newStyle.toRadixString(16)})');
       }
 

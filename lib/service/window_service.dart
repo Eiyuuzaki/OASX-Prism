@@ -20,6 +20,17 @@ import 'package:window_manager/window_manager.dart';
 const Size _defaultDesktopWindowSize = Size(1200, 800);
 const Size _minimumWindowsWindowSize = Size(260, 420);
 
+/// 桌面窗口的固定宽高比（3:2）。
+///
+/// 通过 `windowManager.setAspectRatio` 启用：window_manager 在
+/// `WM_SIZING` 里按这个值锁定比例（横向拖按宽算高、纵向拖按高算宽），
+/// 所以用户能拉伸但**不会变形**，界面布局始终按设计比例排版。
+///
+/// 3:2 与默认窗口 1200×800 一致；用户机器上实测 1800×1200 是同一比例
+/// 在 1.5× DPI 下的结果。（不能写成 `width / height`——常量表达式里
+/// 不允许访问 Size 的属性，所以直接写比值。）
+const double _desktopAspectRatio = 3 / 2;
+
 class WindowService extends GetxService with WindowListener {
   // ignore: unused_field
   final _storage = GetStorage();
@@ -84,6 +95,15 @@ class WindowService extends GetxService with WindowListener {
     final lastState = await initWindowState();
 
     await windowManager.waitUntilReadyToShow(buildWindowOptions(lastState));
+
+    // 固定宽高比：允许拉伸，但不允许拉成任意比例。
+    //
+    // window_manager 在 WM_SIZING 里按这个值锁定比例——横向拖按宽算高、
+    // 纵向拖按高算宽，所以拖任意方向都只做等比缩放。布局按设计比例
+    // 排版，不会因为用户拉成细长窗口而错乱。
+    if (PlatformUtils.isWindows) {
+      await windowManager.setAspectRatio(_desktopAspectRatio);
+    }
 
     _kickoffSystemTrayInit();
   }
