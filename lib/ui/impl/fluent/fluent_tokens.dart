@@ -104,7 +104,16 @@ class FluentPalette {
         card: const Color(0xFF2C2C2C),
         cardHover: const Color(0xFF323232),
         cardPressed: const Color(0xFF383838),
-        stroke: const Color(0xFF3D3D3D),
+        // 描边用**白色半透明**而不是深灰 #3D3D3D。
+        //
+        // 深色主题下窗口透了壁纸，实际底色比 #3D3D3D 更暗；用深灰描边
+        // 会在卡片四周画出一圈黑框，像"卡片被挖空"（用户反馈）。
+        // WinUI 深色主题的描边本身就是叠加的浅色（white 15%），
+        // 在任意深色底上都表现为比底色亮一档的分界线。
+        //
+        // stroke 只用于描边（卡片/按钮/开关/输入框/下拉/对话框），
+        // 没有"深色实线"的语义，全部改白是安全的。
+        stroke: const Color(0x26FFFFFF),
         textPrimary: const Color(0xFFFFFFFF),
         textSecondary: const Color(0xFFC8C8C8),
         textTertiary: const Color(0xFF9A9A9A),
@@ -121,7 +130,13 @@ class FluentPalette {
       card: const Color(0xFFFFFFFF),
       cardHover: const Color(0xFFF9F9F9),
       cardPressed: const Color(0xFFF0F0F0),
-      stroke: const Color(0xFFE5E5E5),
+      // 描边比之前深一档（#E5E5E5 → #C8C8C8）。
+      //
+      // 原因：卡片在材质上只有 48% 白，控件（分段选择器/开关/输入框）
+      // 的 #E5E5E5 描边叠上去后与卡片底只差 20 左右亮度，边框和背景
+      // 融为一体、"控件没有边界"（用户反馈）。
+      // 加深到 #C8C8C8 后边框与底色拉开约 40，边界清晰但不过重。
+      stroke: const Color(0xFFC8C8C8),
       textPrimary: const Color(0xFF1B1B1B),
       textSecondary: const Color(0xFF5D5D5D),
       textTertiary: const Color(0xFF8A8A8A),

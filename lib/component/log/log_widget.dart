@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'log_mixin.dart';
+import 'package:oasx/ui/ui.dart';
 
 class LogWidget extends StatefulWidget {
   final LogMixin controller;
@@ -197,7 +198,7 @@ class TopLogPanel extends StatelessWidget {
           ).paddingAll(8).constrained(height: 48),
           // 底部
           if (bottomChild != null) ...[
-            const Divider(height: 1),
+            const AppDivider(),
             bottomChild!,
           ],
         ],

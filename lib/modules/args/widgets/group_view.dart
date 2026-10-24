@@ -13,7 +13,7 @@ class GroupView extends StatelessWidget {
       Text(
         data.groupName,
       ),
-      const Divider(),
+      const AppDivider(),
       ListView.builder(
         shrinkWrap: true,
         itemCount: 10,

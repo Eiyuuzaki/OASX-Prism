@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/service/acrylic_service.dart';
+import 'package:oasx/ui/ui.dart';
 import 'package:oasx/modules/common/models/config_drag_payload.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
@@ -106,10 +107,7 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
               child: ListView.separated(
                 controller: _listScrollController,
                 itemCount: scripts.length,
-                separatorBuilder: (_, __) => Divider(
-                  height: 1,
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
+                separatorBuilder: (_, __) => const AppDivider(),
                 itemBuilder: (context, index) =>
                     _buildDropTargetTile(context, scripts[index]),
               ),

@@ -42,9 +42,9 @@ class ResourceHistoryDialog extends StatelessWidget {
                     ),
                   ]),
                 ),
-                const Divider(height: 1),
+                const AppDivider(),
                 _RangeBar(controller: c),
-                const Divider(height: 1),
+                const AppDivider(),
                 Expanded(
                   child: c.loading.value && c.points.isEmpty
                       ? const Center(child: CircularProgressIndicator())

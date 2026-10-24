@@ -43,7 +43,7 @@ class TopLogPanel extends StatelessWidget {
             ],
           ).paddingAll(8).constrained(height: 48),
           if (bottomChild != null) ...[
-            const Divider(height: 1),
+            const AppDivider(),
             bottomChild!,
           ],
         ],

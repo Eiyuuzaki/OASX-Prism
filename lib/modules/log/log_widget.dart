@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 
 import 'package:easy_rich_text/easy_rich_text.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import 'log_mixin.dart';
+import 'package:oasx/ui/ui.dart';
 
 part 'log_widget_scroll.dart';
 part 'log_widget_top_panel.dart';

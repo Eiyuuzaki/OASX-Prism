@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/api/api_client.dart';
+import 'package:oasx/ui/ui.dart';
 import 'package:oasx/modules/args/index.dart';
 import 'package:oasx/modules/common/models/config_drag_payload.dart';
 import 'package:oasx/modules/common/widgets/drag_copy_feedback.dart';
@@ -114,16 +115,9 @@ class _TaskCatalogPanelState extends State<TaskCatalogPanel> {
                 key: const PageStorageKey<String>('home-task-catalog-list'),
                 controller: _scrollController,
                 itemCount: sections.length,
-                separatorBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .outlineVariant
-                        .withValues(alpha: 0.7),
-                  ),
+                separatorBuilder: (context, index) => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  child: AppDivider(),
                 ),
                 itemBuilder: (context, index) => _CatalogSectionCard(
                   controller: widget.controller,
@@ -629,7 +623,7 @@ class _CatalogSectionCard extends StatelessWidget {
                   for (int index = 0;
                       index < section.tasks.length;
                       index++) ...[
-                    if (index > 0) const Divider(height: 1),
+                    if (index > 0) const AppDivider(),
                     _CatalogTaskRow(
                       controller: controller,
                       sourceScriptName: sourceScriptName,

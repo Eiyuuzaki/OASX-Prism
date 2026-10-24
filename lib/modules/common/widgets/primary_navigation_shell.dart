@@ -102,7 +102,7 @@ class _PrimaryNavigationShellState extends State<PrimaryNavigationShell> {
                               selectedIndex: selectedIndex,
                               onSelected: _handleDestinationSelected,
                             ),
-                            const VerticalDivider(width: 1),
+                            const AppDivider(height: 1, vertical: true),
                             Expanded(child: content),
                           ],
                         )
@@ -115,7 +115,7 @@ class _PrimaryNavigationShellState extends State<PrimaryNavigationShell> {
                           selectedIndex: selectedIndex,
                           onSelected: _handleDestinationSelected,
                         ),
-                        const VerticalDivider(width: 1),
+                        const AppDivider(height: 1, vertical: true),
                         Expanded(child: content),
                       ],
                     )
