@@ -108,4 +108,16 @@ Future<void> initService() async {
   await AcrylicService.applyEffect(
     dark: Get.find<ThemeService>().isDarkMode,
   );
+
+  // 材质生效后必须重建一次主题。
+  //
+  // `cardTheme.color` 与 `scaffoldBackgroundColor` 都读
+  // `AcrylicService.transparentBackground`，而 ThemeData 是在
+  // `GetMaterialApp` 构建时求值的——那一刻材质还没设上（值为 false），
+  // 卡片会拿到 92% 的不透明白，把材质完全盖住（表现为"整圈白边"）。
+  // 材质生效后 `transparentBackground` 变为 true，但不属于任何 Rx，
+  // 不会触发 Obx 重建，所以这里显式刷一次。
+  if (Get.isRegistered<ThemeService>()) {
+    Get.find<ThemeService>().bumpForMaterial();
+  }
 }

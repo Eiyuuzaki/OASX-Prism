@@ -16,9 +16,9 @@ class AppNavDestination {
 
 /// 导航栏宽度。
 ///
-/// WinUI 的 NavigationView **紧凑模式**：图标在上、文字在下，约 88px。
-/// 对齐 Lenovo Legion Toolkit / Win11 设置应用的侧栏比例。
-double appNavBarWidth() => resolveAppUiStyle() == AppUiStyle.fluent ? 88 : 80;
+/// WinUI 的 NavigationView **紧凑模式**：卡片 56 + 左右留白，约 64px。
+/// 参考 Lenovo Legion Toolkit / Win11 设置应用的侧栏比例。
+double appNavBarWidth() => resolveAppUiStyle() == AppUiStyle.fluent ? 64 : 80;
 
 /// 跨平台语义导航栏。
 ///
@@ -171,6 +171,12 @@ class _FluentNavItemState extends State<_FluentNavItem> {
   /// LLT 的动画时长：160ms。
   static const Duration _anim = Duration(milliseconds: 160);
 
+  /// 卡片边长。正方形（宽高严格相等）。
+  ///
+  /// 从 72 缩到 56：72 时卡片显得笨重、占了侧栏一半宽度，
+  /// 56 更接近 Win11 紧凑导航的密度。
+  static const double _cardSize = 56;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -198,55 +204,56 @@ class _FluentNavItemState extends State<_FluentNavItem> {
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
         child: Padding(
-          // 卡片四周留白，让它成为独立的"正方形块"
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          child: AnimatedContainer(
-            duration: _anim,
-            curve: Curves.easeOut,
-            // 正方形卡片：宽高接近 1:1（高度由外层固定，宽度撑满侧栏减留白）
-            height: 72,
-            decoration: BoxDecoration(
-              color: fill,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Stack(
-              children: [
-                // 指示条：放在**卡片内部**左侧，垂直居中
-                Positioned(
-                  left: 4,
-                  top: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: AnimatedOpacity(
-                      duration: _anim,
-                      opacity: selected ? 1 : 0,
-                      child: Container(
-                        width: 3,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: accent,
-                          borderRadius: BorderRadius.circular(1.5),
+          // 卡片四周留白：缩小后 4px 足够，让卡片显得紧凑
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+          child: Center(
+            child: AnimatedContainer(
+              duration: _anim,
+              curve: Curves.easeOut,
+              // 正方形卡片：56×56（宽高严格相等）
+              width: _cardSize,
+              height: _cardSize,
+              decoration: BoxDecoration(
+                color: fill,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Stack(
+                children: [
+                  // 指示条：放在**卡片内部**左侧，垂直居中
+                  Positioned(
+                    left: 3,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: AnimatedOpacity(
+                        duration: _anim,
+                        opacity: selected ? 1 : 0,
+                        child: Container(
+                          width: 3,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: accent,
+                            borderRadius: BorderRadius.circular(1.5),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                // 图标 + 文字，整体居中
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(widget.destination.icon, size: 24, color: fg),
-                      // 文字区：选中时高度塌缩 + 淡出（图标因此居中）
-                      AnimatedContainer(
-                        duration: _anim,
-                        curve: Curves.easeOut,
-                        height: selected ? 0 : 15,
-                        child: AnimatedOpacity(
+                  // 图标 + 文字，整体居中
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(widget.destination.icon,
+                            size: 22, color: fg),
+                        // 文字区：选中时高度塌缩 + 淡出（图标因此居中）
+                        AnimatedContainer(
                           duration: _anim,
-                          opacity: selected ? 0 : 1,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 2),
+                          curve: Curves.easeOut,
+                          height: selected ? 0 : 13,
+                          child: AnimatedOpacity(
+                            duration: _anim,
+                            opacity: selected ? 0 : 1,
                             child: Text(
                               widget.destination.label,
                               maxLines: 1,
@@ -261,11 +268,11 @@ class _FluentNavItemState extends State<_FluentNavItem> {
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

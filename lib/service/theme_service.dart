@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:oasx/config/theme.dart';
@@ -79,6 +79,19 @@ class ThemeService extends GetxService {
     Get.changeThemeMode(themeMode);
     // 毛玻璃材质的明暗分支也跟着变（mica/acrylic 的 dark 参数）
     AcrylicService.refresh(dark: _dark.value);
+    Get.forceAppUpdate();
+  }
+
+  /// 材质生效后重建主题。
+  ///
+  /// `lightTheme`/`darkTheme` 是顶层 getter，读取
+  /// `AcrylicService.transparentBackground` 决定卡片与 scaffold 的
+  /// 透明度。启动时材质晚于 `GetMaterialApp` 构建，那一刻该标志还是
+  /// false，卡片会拿到 92% 不透明白（把材质完全盖住、表现为"整圈白边"）。
+  ///
+  /// 材质生效后标志变 true，但它不是 Rx，不会触发 Obx 重建，
+  /// 所以这里强制刷一次，让新的透明卡片生效。
+  void bumpForMaterial() {
     Get.forceAppUpdate();
   }
 
