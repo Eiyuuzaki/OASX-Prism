@@ -69,9 +69,34 @@ class AppNavBar extends StatelessWidget {
 
   Widget _buildFluent(BuildContext context) {
     final p = FluentPalette.of(context);
+
+    // 系统材质（Mica/Acrylic）生效时，侧栏必须**完全透明**，与内容区
+    // 共用同一个材质底——Win11 设置应用就是这个做法：侧栏与内容之间
+    // 没有底色差异，只靠一条 1px 细分割线区分边界。
+    //
+    // 实测教训：给侧栏叠一层半透明色（LayerFillColorDefault ≈ 50%）不行——
+    // 半透明 Flutter 像素与 DWM 混合后透出的是壁纸的原始颜色而非
+    // 去饱和的 Mica 底，壁纸色彩不均匀（如下半偏暖）时侧栏会斑驳。
+    //
+    // 无材质时用实色 layerAlt，避免露出窗口底色。
+    //
+    // 判据用主题的 scaffoldBackgroundColor 是否为透明——这是
+    // "当前有系统材质"的现有信号，不必反向依赖 AcrylicService。
+    final materialActive =
+        Theme.of(context).scaffoldBackgroundColor == Colors.transparent;
+    final paneColor = materialActive ? Colors.transparent : p.layerAlt;
+    final dividerColor =
+        materialActive ? p.stroke.withValues(alpha: 0.6) : p.stroke;
+
     return Container(
       width: appNavBarWidth(),
-      color: p.layerAlt,
+      color: paneColor,
+      // 与内容区的边界：一条细分割线（WinUI 的 pane 分隔方式）
+      foregroundDecoration: BoxDecoration(
+        border: Border(
+          right: BorderSide(color: dividerColor, width: 1),
+        ),
+      ),
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

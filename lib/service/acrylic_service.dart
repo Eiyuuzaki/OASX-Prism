@@ -70,21 +70,47 @@ class AcrylicService {
   }
 
   /// 阶段二：应用材质。在窗口就绪之后调用。
+  ///
+  /// 优先级（实测结论，勿随意调换）：
+  ///
+  /// 1. **Acrylic**——实时模糊 + 染色，材质感最强，且模糊会把壁纸的
+  ///    区域色差抹平（Mica Alt 会把壁纸的深色花瓣直接透出来，
+  ///    导致侧栏与内容区"底色不一致"）。
+  /// 2. **Mica**——Acrylic 不可用时的后备。染色含蓄但均匀。
+  /// 3. **Mica Alt**——最后手段，只求有材质。
+  ///
+  /// 注意 Acrylic 的系统行为：窗口最大化时 Win11 会自动回退为实色，
+  /// 这是性能设计，不是 bug。
   static Future<void> applyEffect({bool? dark}) async {
     if (!_supported || !_pluginReady) return;
     final useDark = dark ?? false;
 
-    // 1) Mica Alt（tabbed）：取壁纸，染色比 Mica 更明显
+    // 1) Acrylic：实时模糊背后内容，用 tint 控制明暗。
+    //
+    // tint 定为 0x66（40%）——用户验收确认的值。调参过程记录：
+    // - 0x99（60%）：几乎变成实色，材质感消失
+    // - Mica（无 tint）：材质感太弱
+    // - Mica Alt：壁纸的区域色变直接透出（Bloom 壁纸的深紫花瓣），
+    //   侧栏与内容区看起来"底色不一致"
+    //
+    // Acrylic 在 0x66 下侧栏与内容会有可测的色差（壁纸区域色透过毛玻璃），
+    // 但视觉上是自然的"玻璃在不同背景上"的效果，不要试图用加深 tint 消除它。
+    //
+    // 深色下 0xCC（80%）：深色主题对比度敏感，太透会让白字看不清。
+    final tint = useDark
+        ? const Color(0xCC0A0A0C)
+        : const Color(0x66FFFFFF);
     try {
-      await Window.setEffect(effect: WindowEffect.tabbed, dark: useDark);
+      await Window.setEffect(effect: WindowEffect.acrylic, color: tint);
       transparentBackground = true;
-      debugPrint('AcrylicService: tabbed/mica-alt (dark=$useDark) OK');
+      debugPrint('AcrylicService: acrylic tint=0x'
+          '${tint.toARGB32().toRadixString(16)} (dark=$useDark) OK');
       return;
     } catch (e) {
-      debugPrint('AcrylicService: tabbed failed: $e');
+      debugPrint('AcrylicService: acrylic failed: $e');
     }
 
-    // 2) Mica：同样取壁纸，更含蓄
+    // 2) Mica：取壁纸但染色含蓄、整窗均匀。
     try {
       await Window.setEffect(effect: WindowEffect.mica, dark: useDark);
       transparentBackground = true;
@@ -94,20 +120,14 @@ class AcrylicService {
       debugPrint('AcrylicService: mica failed: $e');
     }
 
-    // 3) Acrylic：实时模糊背后内容，用 tint 控制明暗
-    //
-    // 深色下 0x99（60%）仍太透，壁纸亮蓝会把白字压得看不清，故用 0xCC（80%）。
-    final tint = useDark
-        ? const Color(0xCC0A0A0C)
-        : const Color(0x66FFFFFF);
+    // 3) Mica Alt（tabbed）：染色最强、也最不均匀，最后手段。
     try {
-      await Window.setEffect(effect: WindowEffect.acrylic, color: tint);
+      await Window.setEffect(effect: WindowEffect.tabbed, dark: useDark);
       transparentBackground = true;
-      debugPrint('AcrylicService: fallback acrylic tint=0x'
-          '${tint.toARGB32().toRadixString(16)} (dark=$useDark) OK');
+      debugPrint('AcrylicService: tabbed/mica-alt (dark=$useDark) OK');
       return;
     } catch (e) {
-      debugPrint('AcrylicService: acrylic failed: $e');
+      debugPrint('AcrylicService: tabbed failed: $e');
     }
 
     debugPrint('AcrylicService: all effects failed, keep opaque background');
