@@ -145,19 +145,17 @@ class _ConfigJsonImportDialogState extends State<ConfigJsonImportDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.of(context).pop(),
-          child: Text(I18n.cancel.tr),
-        ),
-        FilledButton(
+        AppButton(
+  label: I18n.cancel.tr,
+  variant: AppButtonVariant.text,
+  onPressed: _busy ? null : () => Navigator.of(context).pop(),
+),
+        AppButton(
           key: const ValueKey('json-import'),
-          onPressed: _busy || _document == null ? null : _import,
-          child: _busy
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: AppProgressIndicator.circular(strokeWidth: 2),
-                )
-              : Text(I18n.configJsonImportAction.tr),
+          label: I18n.configJsonImportAction.tr,
+          variant: AppButtonVariant.primary,
+          loading: _busy,
+          onPressed: _document == null ? null : _import,
         ),
       ],
     ),
@@ -276,19 +274,17 @@ class _ConfigJsonExportDialogState extends State<_ConfigJsonExportDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.of(context).pop(),
-          child: Text(I18n.cancel.tr),
-        ),
-        FilledButton(
+        AppButton(
+  label: I18n.cancel.tr,
+  variant: AppButtonVariant.text,
+  onPressed: _busy ? null : () => Navigator.of(context).pop(),
+),
+        AppButton(
           key: const ValueKey('json-export'),
-          onPressed: _busy ? null : _export,
-          child: _busy
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: AppProgressIndicator.circular(strokeWidth: 2),
-                )
-              : Text(I18n.configJsonSave.tr),
+          label: I18n.configJsonSave.tr,
+          variant: AppButtonVariant.primary,
+          loading: _busy,
+          onPressed: _export,
         ),
       ],
     ),

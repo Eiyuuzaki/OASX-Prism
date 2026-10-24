@@ -59,8 +59,10 @@ class ServerView extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Text(controller.rootPathServer.value),
-        TextButton(
-          onPressed: () async {
+        AppButton(
+  label: I18n.selectRootPathServer.tr,
+  variant: AppButtonVariant.text,
+  onPressed: () async {
             final selectedDirectory =
                 await FilePicker.platform.getDirectoryPath();
             if (selectedDirectory == null) {
@@ -68,8 +70,7 @@ class ServerView extends StatelessWidget {
             }
             controller.updateRootPathServer(selectedDirectory);
           },
-          child: Text(I18n.selectRootPathServer.tr),
-        ),
+),
       ].toRow();
     });
     final pass = GetX<ServerController>(builder: (controller) {

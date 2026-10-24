@@ -50,13 +50,13 @@ class UpdaterView extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center)
           .constrained(height: 26),
-      TextButton(
-          onPressed: () {
+      AppButton(
+  label: I18n.executeUpdate.tr,
+  variant: AppButtonVariant.text,
+  onPressed: () {
             ApiClient().getExecuteUpdate();
           },
-          child: Text(
-            I18n.executeUpdate.tr,
-          )),
+),
     ].toRow(
         crossAxisAlignment: CrossAxisAlignment.center,
         separator: const SizedBox(width: 10));

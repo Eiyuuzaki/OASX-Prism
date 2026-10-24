@@ -60,16 +60,17 @@ void killServer() {
       return AlertDialog(
         title: Text(I18n.areYouSureKill.tr),
         actions: [
-          TextButton(
-            onPressed: killing
+          AppButton(
+  label: I18n.cancel.tr,
+  variant: AppButtonVariant.text,
+  onPressed: killing
                 ? null
                 : () {
                     if (Get.isDialogOpen ?? false) {
                       Get.back();
                     }
                   },
-            child: Text(I18n.cancel.tr),
-          ),
+),
           FilledButton(
             onPressed: killing
                 ? null

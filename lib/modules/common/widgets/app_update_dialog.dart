@@ -66,21 +66,21 @@ class AppUpdateDialog extends StatelessWidget {
         return <Widget>[
           _buildProgressSection(),
           <Widget>[
-            TextButton(
-              onPressed: () => service.openReleasePage(plan.release),
-              child: Text(I18n.openReleasePage.tr),
-            ),
+            AppButton(
+  label: I18n.openReleasePage.tr,
+  variant: AppButtonVariant.text,
+  onPressed: () => service.openReleasePage(plan.release),
+),
             if (plan.canInstallInApp)
-              FilledButton(
-                onPressed: service.isInstalling.value
-                    ? null
-                    : () => service.installUpdate(plan),
-                child: Text(
-                  service.isInstalling.value
+              AppButton(
+  label: service.isInstalling.value
                       ? I18n.updateDownloading.tr
                       : plan.installActionKey.tr,
-                ),
-              ),
+  variant: AppButtonVariant.primary,
+  onPressed: service.isInstalling.value
+                    ? null
+                    : () => service.installUpdate(plan),
+),
           ].toRow(
             mainAxisAlignment: MainAxisAlignment.end,
             separator: const SizedBox(width: 8),

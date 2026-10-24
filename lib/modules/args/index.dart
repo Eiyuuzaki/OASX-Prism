@@ -249,13 +249,14 @@ class ArgsDraftBar extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            TextButton(
-              onPressed: () async {
+            AppButton(
+  label: I18n.cancel.tr,
+  variant: AppButtonVariant.text,
+  onPressed: () async {
                 await controller.discardDraftChanges();
                 await onCancel?.call();
               },
-              child: Text(I18n.cancel.tr),
-            ),
+),
             const SizedBox(width: 8),
             FilledButton.icon(
               onPressed: controller.isSavingDraft.value || dirtyCount == 0

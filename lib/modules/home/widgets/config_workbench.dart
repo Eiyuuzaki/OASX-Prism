@@ -191,14 +191,16 @@ class ConfigWorkbench extends StatelessWidget {
         title: Text(I18n.argsDiscardChanges.tr),
         content: Text(I18n.argsUnsavedPrompt.tr),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(I18n.cancel.tr),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(I18n.confirm.tr),
-          ),
+          AppButton(
+  label: I18n.cancel.tr,
+  variant: AppButtonVariant.text,
+  onPressed: () => Navigator.of(dialogContext).pop(false),
+),
+          AppButton(
+  label: I18n.confirm.tr,
+  variant: AppButtonVariant.primary,
+  onPressed: () => Navigator.of(dialogContext).pop(true),
+),
         ],
       ),
     );

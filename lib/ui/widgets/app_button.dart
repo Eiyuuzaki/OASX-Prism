@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:oasx/ui/impl/fluent/fluent_tokens.dart';
 import 'package:oasx/ui/style.dart';
 
+import 'package:oasx/ui/widgets/app_progress_indicator.dart';
 /// 按钮的语义变体。
 ///
 /// 用「表达什么意图」而不是「用哪个 widget」来定义，
@@ -43,6 +44,7 @@ class AppButton extends StatelessWidget {
     this.trailingIcon,
     this.dense = false,
     this.expand = false,
+    this.loading = false,
   });
 
   /// 按钮文字。
@@ -66,14 +68,36 @@ class AppButton extends StatelessWidget {
   /// 是否占满可用宽度。
   final bool expand;
 
+  /// 加载态：把内容换成小进度环并禁用点击。
+  ///
+  /// 替代原先各处的 `child: _busy ? 进度环 : Text(...)` 写法——
+  /// 那套写法让每个调用点都要自己拼三元表达式，`AppButton` 统一接管
+  /// 后调用方只需传 `loading: _busy`。
+  final bool loading;
+
   @override
   Widget build(BuildContext context) {
     final style = resolveAppUiStyle();
-    final child = _buildContent(context, style);
+
+    // 加载态：内容换成小进度环，并强制禁用点击
+    final child = loading
+        ? Center(
+            child: SizedBox(
+              width: dense ? 14 : 16,
+              height: dense ? 14 : 16,
+              child: AppProgressIndicator.circular(
+                strokeWidth: 2,
+                size: dense ? 14 : 16,
+              ),
+            ),
+          )
+        : _buildContent(context, style);
+
+    final effectiveOnPressed = loading ? null : onPressed;
 
     final Widget button = switch (style) {
-      AppUiStyle.fluent => _buildFluent(context, child),
-      _ => _buildMaterial(context, child),
+      AppUiStyle.fluent => _buildFluent(context, child, effectiveOnPressed),
+      _ => _buildMaterial(context, child, effectiveOnPressed),
     };
 
     return expand ? SizedBox(width: double.infinity, child: button) : button;
@@ -136,7 +160,7 @@ class AppButton extends StatelessWidget {
     };
   }
 
-  Widget _buildFluent(BuildContext context, Widget child) {
+  Widget _buildFluent(BuildContext context, Widget child, VoidCallback? onPressed) {
     final p = FluentPalette.of(context);
     final disabled = onPressed == null;
     final baseBg = _fluentBackground(p);
@@ -166,7 +190,7 @@ class AppButton extends StatelessWidget {
 
   // ── Material 实现（沿用现有观感）──────────────────────────────
 
-  Widget _buildMaterial(BuildContext context, Widget child) {
+  Widget _buildMaterial(BuildContext context, Widget child, VoidCallback? onPressed) {
     final padding = dense
         ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
         : const EdgeInsets.symmetric(horizontal: 20, vertical: 10);

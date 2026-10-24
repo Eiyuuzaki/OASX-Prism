@@ -92,15 +92,19 @@ Future<String?> showAddConfigDialog(
           );
         }),
         actions: [
-          TextButton(
-            onPressed: () {
+          AppButton(
+  label: I18n.cancel.tr,
+  variant: AppButtonVariant.text,
+  onPressed: () {
               if (isSubmitting.value) return;
               Navigator.of(dialogContext).pop();
             },
-            child: Text(I18n.cancel.tr),
-          ),
+),
           Obx(() {
-            return FilledButton(
+            return AppButton(
+              label: I18n.confirm.tr,
+              variant: AppButtonVariant.primary,
+              loading: isSubmitting.value,
               onPressed: isSubmitting.value
                   ? null
                   : () async {
@@ -125,13 +129,6 @@ Future<String?> showAddConfigDialog(
                         onSubmitDone?.call();
                       }
                     },
-              child: isSubmitting.value
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: AppProgressIndicator.circular(strokeWidth: 2),
-                    )
-                  : Text(I18n.confirm.tr),
             );
           }),
         ],

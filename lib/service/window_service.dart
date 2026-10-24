@@ -16,6 +16,7 @@ import 'package:oasx/service/theme_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/platform_utils.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:oasx/ui/ui.dart';
 
 const Size _defaultDesktopWindowSize = Size(1200, 800);
 const Size _minimumWindowsWindowSize = Size(260, 420);
@@ -351,15 +352,17 @@ class WindowService extends GetxService with WindowListener {
           I18n.exitBackendStopFailedHelp.trParams({'address': displayAddress}),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: ExitFailureChoice.keepOpen),
-            child: Text(I18n.exitKeepOpen.tr),
-          ),
-          TextButton(
-            onPressed: () =>
+          AppButton(
+  label: I18n.exitKeepOpen.tr,
+  variant: AppButtonVariant.text,
+  onPressed: () => Get.back(result: ExitFailureChoice.keepOpen),
+),
+          AppButton(
+  label: I18n.exitFrontendOnly.tr,
+  variant: AppButtonVariant.text,
+  onPressed: () =>
                 Get.back(result: ExitFailureChoice.exitFrontendOnly),
-            child: Text(I18n.exitFrontendOnly.tr),
-          ),
+),
         ],
       ),
       barrierDismissible: false,

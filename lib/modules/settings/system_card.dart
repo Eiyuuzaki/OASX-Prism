@@ -272,20 +272,14 @@ class CheckUpdateButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final appUpdateService = Get.find<AppUpdateService>();
     return Obx(() {
-      return ElevatedButton(
-        onPressed: appUpdateService.isCheckingForUpdates.value
-            ? null
-            : () async => await checkUpdate(
-                  showTip: true,
-                  forceCheck: true,
-                ),
-        child: appUpdateService.isCheckingForUpdates.value
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: AppProgressIndicator.circular(strokeWidth: 2),
-              )
-            : Text(I18n.executeUpdate.tr),
+      return AppButton(
+        label: I18n.executeUpdate.tr,
+        variant: AppButtonVariant.secondary,
+        loading: appUpdateService.isCheckingForUpdates.value,
+        onPressed: () async => await checkUpdate(
+          showTip: true,
+          forceCheck: true,
+        ),
       );
     });
   }
