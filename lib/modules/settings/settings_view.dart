@@ -10,6 +10,7 @@ import 'package:oasx/modules/settings/settings_leave_handler.dart';
 import 'package:oasx/modules/settings/system_card.dart';
 import 'package:oasx/modules/settings/user_card.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 import 'package:oasx/utils/platform_utils.dart';
 
 class SettingsView extends StatefulWidget {
@@ -89,7 +90,10 @@ class _SettingsViewState extends State<SettingsView> {
           }
 
           return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            // stretch：左侧导航卡填满整行高度。之前是 start +
+            // MainAxisSize.min，卡片只有内容高，下面留出一大块
+            // 裸露的 Acrylic，看起来像布局残破
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildPrimaryNav(),
               const SizedBox(width: _layoutSpacing),
@@ -241,49 +245,47 @@ class _SettingsViewState extends State<SettingsView> {
   Widget _buildPrimaryNav() {
     return SizedBox(
       width: _navWidth,
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: List.generate(_sections.length, (index) {
-              final isSelected = index == _selectedSectionIndex;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => _scrollToSection(index),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: isSelected
-                          ? Theme.of(context)
-                              .colorScheme
-                              .secondaryContainer
-                              .withValues(alpha: 0.38)
-                          : Colors.transparent,
-                    ),
-                    child: Text(
-                      _sections[index].navTitleBuilder(),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.w400,
-                          ),
-                    ),
+      // 语义卡片：Windows 上是「卡片底 + 1px 描边、无阴影」，
+      // 且随 Row 的 stretch 撑满高度——不留裸露的材质底
+      child: AppCard(
+        variant: AppCardVariant.elevated,
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: List.generate(_sections.length, (index) {
+            final isSelected = index == _selectedSectionIndex;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => _scrollToSection(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: isSelected
+                        ? Theme.of(context)
+                            .colorScheme
+                            .secondaryContainer
+                            .withValues(alpha: 0.38)
+                        : Colors.transparent,
+                  ),
+                  child: Text(
+                    _sections[index].navTitleBuilder(),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w400,
+                        ),
                   ),
                 ),
-              );
-            }),
-          ),
+              ),
+            );
+          }),
         ),
       ),
     );

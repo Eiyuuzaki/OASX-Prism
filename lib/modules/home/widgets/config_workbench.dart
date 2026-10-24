@@ -7,7 +7,6 @@ import 'package:oasx/modules/home/models/home_workbench_layout.dart';
 import 'package:oasx/modules/home/widgets/active_config_panel.dart';
 import 'package:oasx/modules/home/widgets/config_collection_panel.dart';
 import 'package:oasx/modules/home/widgets/home_workbench_body.dart';
-import 'package:oasx/modules/home/widgets/workbench_sidebar_panel.dart';
 import 'package:oasx/service/script_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
 
@@ -66,12 +65,8 @@ class ConfigWorkbench extends StatelessWidget {
             ? () => _showScriptListPage(context)
             : null,
       ),
-      sidebar: Obx(() {
-        return WorkbenchSidebarPanel(
-          controller: controller,
-          scriptName: controller.activeScriptName.value,
-        );
-      }),
+      // 右栏（统计/日志/资产页签）已拆除：统计与资产是独立页面，
+      // 日志并入日志页。主页只保留 配置列表 | 详情 两栏。
     );
   }
 

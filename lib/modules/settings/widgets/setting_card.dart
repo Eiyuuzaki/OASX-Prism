@@ -79,14 +79,15 @@ class SettingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 分组标题在卡片外，字号比 Material 的 titleMedium 小、
-          // 用次级文字色——Win11 的分区标签是"弱强调"
+          // 分组标题在卡片外。颜色用 textPrimary 而非 textSecondary：
+          // 标题直接浮在 Acrylic 材质上（不是实色页面底），灰色在
+          // 透出的壁纸上对比度不足（实测深蓝壁纸上几乎不可读）。
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               title,
               style: theme.textTheme.labelLarge?.copyWith(
-                color: p.textSecondary,
+                color: p.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),

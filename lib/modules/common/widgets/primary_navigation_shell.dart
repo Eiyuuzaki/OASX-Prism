@@ -14,8 +14,6 @@ import 'package:oasx/views/log/log_page.dart';
 import 'package:oasx/views/resource/resource_page.dart';
 import 'package:oasx/views/statistics/statistics_page.dart';
 
-const double kPrimaryNavigationRailWidth = 80;
-
 /// 页面顺序（决定导航项索引）。
 ///
 /// 索引即数组下标，改顺序时导航项与内容栈会一起跟着变，

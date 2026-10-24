@@ -10,7 +10,7 @@ class HomeWorkbenchBody extends StatefulWidget {
     required this.controller,
     required this.collectionBuilder,
     required this.detailsBuilder,
-    required this.sidebar,
+    this.sidebar,
   });
 
   /// Home dashboard controller providing persisted split state.
@@ -23,7 +23,10 @@ class HomeWorkbenchBody extends StatefulWidget {
   final Widget Function(HomeWorkbenchLayoutMode layoutMode) detailsBuilder;
 
   /// Right sidebar widget reused in three-pane mode.
-  final Widget sidebar;
+  ///
+  /// 可空：null 表示没有右栏（日志/统计/资产已拆成独立页面），
+  /// 此时布局强制两栏。
+  final Widget? sidebar;
 
   @override
   State<HomeWorkbenchBody> createState() => _HomeWorkbenchBodyState();
@@ -81,6 +84,9 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
             maxWidth: constraints.maxWidth,
             collectionWidth: persistedCollectionWidth,
             splitRatio: persistedSplitRatio,
+            // 无侧栏（日志/统计/资产已拆成独立页面）时不允许三栏，
+            // 否则 resolve 会按宽度返回三栏几何、却没有右栏可渲染
+            forceTwoPane: widget.sidebar == null,
           );
           final layout = _resolveLayout(
             maxWidth: constraints.maxWidth,
@@ -156,8 +162,10 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
           ),
           SizedBox(
             width: layout.logWidth,
+            // 三栏分支只在 sidebar != null 时可达（无侧栏时布局被强制两栏），
+            // 但类型上仍需处理可空——断言兜底
             child: _buildPaneFrame(
-              child: widget.sidebar,
+              child: widget.sidebar ?? const SizedBox.shrink(),
               highlighted:
                   _pendingCollapseSide == HomeWorkbenchCollapseSide.logs,
               progress: _pendingCollapseProgress,
@@ -185,7 +193,7 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
       maxWidth: maxWidth,
       collectionWidth: currentCollectionWidth,
       splitRatio: currentSplitRatio,
-      forceTwoPane: _forceTwoPane,
+      forceTwoPane: _forceTwoPane || widget.sidebar == null,
     );
   }
 

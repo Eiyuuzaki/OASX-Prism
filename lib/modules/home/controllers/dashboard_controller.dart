@@ -96,21 +96,15 @@ enum HomeTaskCatalogFilter {
 }
 
 /// Returns the visible workbench tabs for the active layout mode.
+///
+/// 统计 / 日志 / 资产已拆成独立页面（左侧导航进入），
+/// 主页工作台只保留概览与任务两个页签。
 List<HomeWorkbenchTab> resolveHomeWorkbenchTabs(
   HomeWorkbenchLayoutMode mode,
 ) {
-  if (mode == HomeWorkbenchLayoutMode.threePane) {
-    return const [
-      HomeWorkbenchTab.status,
-      HomeWorkbenchTab.tasks,
-    ];
-  }
   return const [
     HomeWorkbenchTab.status,
     HomeWorkbenchTab.tasks,
-    HomeWorkbenchTab.logs,
-    HomeWorkbenchTab.stats,
-    HomeWorkbenchTab.assets,
   ];
 }
 
