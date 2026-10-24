@@ -254,8 +254,12 @@ class _PrimaryNavigationRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 语义导航栏：Windows 上渲染为 WinUI NavigationView
-    // （图标在左、文字在右，选中是左侧竖条指示）
+    // 语义导航栏：Windows 上渲染为 WinUI NavigationView 紧凑模式
+    // （图标在上、文字在下；选中是左侧贴边竖条 + 圆角高亮块）。
+    //
+    // 「设置」放在 bottomDestinations —— 次级项固定底部，
+    // 这是 Win11 设置/Legion Toolkit 的通用做法。
+    // 索引仍接在主分组之后（4），与 _kRouteOrder 一致。
     return AppNavBar(
       selectedIndex: selectedIndex,
       onSelected: onSelected,
@@ -265,6 +269,8 @@ class _PrimaryNavigationRail extends StatelessWidget {
             icon: Icons.bar_chart_rounded, label: I18n.homeStatsTab.tr),
         AppNavDestination(icon: Icons.diamond_outlined, label: '资产'),
         AppNavDestination(icon: Icons.article_outlined, label: I18n.log.tr),
+      ],
+      bottomDestinations: [
         AppNavDestination(icon: Icons.settings_rounded, label: I18n.setting.tr),
       ],
     );
