@@ -3,11 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:oasx/modules/common/widgets/primary_navigation_shell.dart';
 import 'package:oasx/modules/home/home_binding.dart';
-import 'package:oasx/modules/home/index.dart';
-import 'package:oasx/modules/home/models/home_workbench_layout.dart';
 import 'package:oasx/modules/server/index.dart';
-import 'package:oasx/modules/settings/index.dart';
-import 'package:oasx/utils/platform_utils.dart';
 
 class Routes {
   static const initial = '/home';
@@ -16,6 +12,21 @@ class Routes {
     GetPage(
       name: '/home',
       page: () => _buildPrimaryPage('/home'),
+      binding: HomeBinding(),
+    ),
+    GetPage(
+      name: '/statistics',
+      page: () => _buildPrimaryPage('/statistics'),
+      binding: HomeBinding(),
+    ),
+    GetPage(
+      name: '/resource',
+      page: () => _buildPrimaryPage('/resource'),
+      binding: HomeBinding(),
+    ),
+    GetPage(
+      name: '/log',
+      page: () => _buildPrimaryPage('/log'),
       binding: HomeBinding(),
     ),
     GetPage(
@@ -32,32 +43,13 @@ class Routes {
     ),
   ];
 
-  /// 桌面布局下改用 shell（底栏导航）的宽度阈值。
-  ///
-  /// 必须和 `PrimaryNavigationShell._shouldShowRail` 的判据一致：
-  /// 低于它时 rail 会换成 bottomNavigationBar。如果这里仍然直接返回
-  /// `HomeView`，桌面分支会铺满整个窗口——侧栏被挤没、内容溢出，
-  /// 而且因为没有 shell 所以连底栏都没有。
-  static const double _shellBreakpoint = kHomeWorkbenchMinCollectionWidth +
-      kHomeWorkbenchMinDetailsWidth +
-      kHomeWorkbenchDividerWidth +
-      kPrimaryNavigationRailWidth;
-
   static Widget _buildPrimaryPage(String routePath) {
-    if (!PlatformUtils.usesDesktopLayout) {
-      return PrimaryNavigationShell(initialRoutePath: routePath);
-    }
-    // 桌面平台也要看窗口宽度：拖窄了就和手机一样走 shell
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth >= _shellBreakpoint) {
-          return switch (routePath) {
-            '/settings' => const SettingsView(),
-            _ => const HomeView(),
-          };
-        }
-        return PrimaryNavigationShell(initialRoutePath: routePath);
-      },
-    );
+    // 一律走壳：壳自己按宽度决定「左侧导航栏」还是「底部导航栏」。
+    //
+    // 旧逻辑是宽窗口直接返回视图（绕过壳），结果是桌面端根本没有导航栏，
+    // 只有全屏内容——这正是「看起来还是老界面」的根因。
+    // 新的页面结构（主页/统计/资产/日志/设置）依赖常驻导航，
+    // 必须始终经过壳，不能按宽度绕过。
+    return PrimaryNavigationShell(initialRoutePath: routePath);
   }
 }

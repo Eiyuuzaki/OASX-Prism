@@ -40,6 +40,7 @@ export 'widgets/app_dialog.dart';
 export 'widgets/app_nav_bar.dart';
 export 'widgets/app_dropdown.dart';
 export 'widgets/app_icon_button.dart';
+export 'widgets/app_page_header.dart';
 
 // 平台实现的设计令牌（业务代码一般不需要直接用，
 // 但自定义组件时需要，所以一并导出）

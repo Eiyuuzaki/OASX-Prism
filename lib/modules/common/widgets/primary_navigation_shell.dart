@@ -10,8 +10,23 @@ import 'package:oasx/modules/settings/index.dart';
 import 'package:oasx/service/acrylic_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/ui/ui.dart';
+import 'package:oasx/views/log/log_page.dart';
+import 'package:oasx/views/resource/resource_page.dart';
+import 'package:oasx/views/statistics/statistics_page.dart';
 
 const double kPrimaryNavigationRailWidth = 80;
+
+/// 页面顺序（决定导航项索引）。
+///
+/// 索引即数组下标，改顺序时导航项与内容栈会一起跟着变，
+/// 不会出现"点了这项跳到那页"的错位。
+const List<String> _kRouteOrder = [
+  '/home',
+  '/statistics',
+  '/resource',
+  '/log',
+  '/settings',
+];
 
 class PrimaryNavigationShell extends StatefulWidget {
   const PrimaryNavigationShell({
@@ -143,15 +158,17 @@ class _PrimaryNavigationShellState extends State<PrimaryNavigationShell> {
   }
 
   String _normalizeRoutePath(String value) {
-    return value == '/settings' ? '/settings' : '/home';
+    return _kRouteOrder.contains(value) ? value : _kRouteOrder.first;
   }
 
   int _selectedIndexForRoute(String value) {
-    return value == '/settings' ? 1 : 0;
+    final i = _kRouteOrder.indexOf(value);
+    return i < 0 ? 0 : i;
   }
 
   String _routePathForIndex(int index) {
-    return index == 1 ? '/settings' : '/home';
+    if (index < 0 || index >= _kRouteOrder.length) return _kRouteOrder.first;
+    return _kRouteOrder[index];
   }
 
   void _handleDestinationSelected(int index) {
@@ -180,6 +197,18 @@ class _PrimaryNavigationShellState extends State<PrimaryNavigationShell> {
         label: I18n.home.tr,
       ),
       NavigationDestination(
+        icon: const Icon(Icons.bar_chart_rounded),
+        label: I18n.homeStatsTab.tr,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.diamond_outlined),
+        label: '资产',
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.article_outlined),
+        label: I18n.log.tr,
+      ),
+      NavigationDestination(
         icon: const Icon(Icons.settings_rounded),
         label: I18n.setting.tr,
       ),
@@ -198,17 +227,21 @@ class _PrimaryNavigationContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 按索引懒构建：只有访问过的页面才进树，未访问的留空
     return IndexedStack(
       index: selectedIndex,
       children: [
-        builtIndexes.contains(0)
-            ? const HomeView(standalone: false)
-            : const SizedBox.shrink(),
-        builtIndexes.contains(1)
-            ? const SettingsView(standalone: false)
-            : const SizedBox.shrink(),
+        _lazy(0, const HomeView(standalone: false)),
+        _lazy(1, const StatisticsPage()),
+        _lazy(2, const ResourcePage()),
+        _lazy(3, const LogPage()),
+        _lazy(4, const SettingsView(standalone: false)),
       ],
     );
+  }
+
+  Widget _lazy(int index, Widget child) {
+    return builtIndexes.contains(index) ? child : const SizedBox.shrink();
   }
 }
 
@@ -230,6 +263,10 @@ class _PrimaryNavigationRail extends StatelessWidget {
       onSelected: onSelected,
       destinations: [
         AppNavDestination(icon: Icons.home_rounded, label: I18n.home.tr),
+        AppNavDestination(
+            icon: Icons.bar_chart_rounded, label: I18n.homeStatsTab.tr),
+        AppNavDestination(icon: Icons.diamond_outlined, label: '资产'),
+        AppNavDestination(icon: Icons.article_outlined, label: I18n.log.tr),
         AppNavDestination(icon: Icons.settings_rounded, label: I18n.setting.tr),
       ],
     );
