@@ -293,9 +293,12 @@ class ResourceController extends GetxController {
     try {
       final collectedRole = await ApiClient().collectResourceNow(name);
       if (collectedRole.isEmpty) {
-        Get.snackbar(
-            I18n.resource_collect_now.tr, I18n.resource_collect_failed.tr,
-            duration: const Duration(seconds: 3));
+        AppInfoBar.show(
+          I18n.resource_collect_now.tr,
+          message: I18n.resource_collect_failed.tr,
+          severity: AppInfoBarSeverity.error,
+          duration: const Duration(seconds: 3),
+        );
         return;
       }
 
@@ -307,12 +310,19 @@ class ResourceController extends GetxController {
       collectorRunning.value = true;
 
       Haptics.medium(); // 移动端采集完成轻震
-      Get.snackbar(I18n.resource_collect_now.tr, I18n.resource_collect_ok.tr,
-          duration: const Duration(seconds: 2));
+      AppInfoBar.show(
+        I18n.resource_collect_now.tr,
+        message: I18n.resource_collect_ok.tr,
+        severity: AppInfoBarSeverity.success,
+        duration: const Duration(seconds: 2),
+      );
     } catch (e) {
-      Get.snackbar(I18n.resource_collect_now.tr,
-          I18n.resource_collect_failed.tr,
-          duration: const Duration(seconds: 3));
+      AppInfoBar.show(
+        I18n.resource_collect_now.tr,
+        message: I18n.resource_collect_failed.tr,
+        severity: AppInfoBarSeverity.error,
+        duration: const Duration(seconds: 3),
+      );
     } finally {
       collecting.value = false;
     }
@@ -339,11 +349,11 @@ class ResourceController extends GetxController {
 
     // 数据太少时不必开弹窗，直接提示
     if (span != null && span.totalDays <= 1) {
-      Get.snackbar(
+      AppInfoBar.show(
         item.name,
-        I18n.resource_no_history.tr,
+        message: I18n.resource_no_history.tr,
         duration: const Duration(seconds: 2),
-      );
+        );
       return;
     }
 

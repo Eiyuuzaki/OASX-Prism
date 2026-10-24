@@ -83,7 +83,7 @@ extension _HomeViewActions on _HomeViewState {
       await controller.retryStartupConnection();
       controller.syncWorkspaceState();
     } catch (_) {
-      Get.snackbar(I18n.loginError.tr, I18n.loginErrorMsg.tr);
+      AppInfoBar.show(I18n.loginError.tr, message: I18n.loginErrorMsg.tr);
     } finally {
       _setRefreshingScripts(false);
     }

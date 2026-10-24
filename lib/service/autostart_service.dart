@@ -8,6 +8,7 @@ import 'package:oasx/modules/common/models/storage_key.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/platform_utils.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:oasx/ui/ui.dart';
 
 class AutoStartService extends GetxService {
   final _storage = GetStorage();
@@ -54,7 +55,7 @@ class AutoStartService extends GetxService {
       final ok = await _setEnabledOnSystem(enabled);
       await refresh();
       if (!ok || enableLaunchAtStartup.value != enabled) {
-        Get.snackbar(I18n.tip.tr, I18n.launchAtStartupUpdateFailed.tr);
+        AppInfoBar.show(I18n.tip.tr, message: I18n.launchAtStartupUpdateFailed.tr);
       }
     } finally {
       isApplying.value = false;

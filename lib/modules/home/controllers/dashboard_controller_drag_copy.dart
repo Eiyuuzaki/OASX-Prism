@@ -81,7 +81,7 @@ extension HomeDashboardDragCopyX on HomeDashboardController {
         return false;
       }
       await _refreshCopiedConfigs([normalizedDestination]);
-      Get.snackbar(I18n.success.tr, payload.displayLabel.tr);
+      AppInfoBar.show(I18n.success.tr, message: payload.displayLabel.tr);
       return true;
     } finally {
       _setDragCopyPending(normalizedDestination, false);

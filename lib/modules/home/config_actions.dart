@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/service/script_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 class ConfigActions {
   const ConfigActions._();
@@ -33,7 +34,7 @@ class ConfigActions {
 
     final success = await scriptService.renameConfig(oldName, newName);
     if (!success) {
-      Get.snackbar(I18n.error.tr, '');
+      AppInfoBar.show(I18n.error.tr, message: '');
     }
     return success;
   }
@@ -101,7 +102,7 @@ class ConfigActions {
         Get.back();
         final success = await scriptService.deleteConfig(name);
         if (!success) {
-          Get.snackbar(I18n.error.tr, '');
+          AppInfoBar.show(I18n.error.tr, message: '');
         }
       },
       onCancel: () {},

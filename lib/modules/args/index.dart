@@ -20,6 +20,7 @@ import 'package:oasx/utils/platform_utils.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '../../translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 part 'widgets/group_view.dart';
 part 'widgets/date_time_picker.dart';
@@ -266,16 +267,10 @@ class ArgsDraftBar extends StatelessWidget {
                         final contextText = scriptName.isEmpty
                             ? localizedTaskName
                             : '$scriptName / $localizedTaskName';
-                        Get.snackbar(
-                          I18n.settingSaved.tr,
-                          contextText,
-                        );
+                        AppInfoBar.show(I18n.settingSaved.tr, message: contextText);
                         return;
                       }
-                      Get.snackbar(
-                        I18n.error.tr,
-                        I18n.argsValidationFailed.tr,
-                      );
+                      AppInfoBar.show(I18n.error.tr, message: I18n.argsValidationFailed.tr);
                     },
               icon: controller.isSavingDraft.value
                   ? const SizedBox(

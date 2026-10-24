@@ -9,6 +9,7 @@ import 'package:oasx/modules/home/widgets/config_collection_panel.dart';
 import 'package:oasx/modules/home/widgets/home_workbench_body.dart';
 import 'package:oasx/service/script_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 class ConfigWorkbench extends StatelessWidget {
   const ConfigWorkbench({
@@ -134,7 +135,7 @@ class ConfigWorkbench extends StatelessWidget {
       runNow: runNow,
     );
     if (ret) {
-      Get.snackbar(I18n.success.tr, taskName.tr);
+      AppInfoBar.show(I18n.success.tr, message: taskName.tr);
     }
   }
 
@@ -149,7 +150,7 @@ class ConfigWorkbench extends StatelessWidget {
       nextRun: nextRun,
     );
     if (ret) {
-      Get.snackbar(I18n.success.tr, taskName.tr);
+      AppInfoBar.show(I18n.success.tr, message: taskName.tr);
     }
   }
 

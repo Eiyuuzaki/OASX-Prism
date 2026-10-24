@@ -1,9 +1,10 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 mixin LogMixin on GetxController {
   /// max lines to store in log
@@ -109,7 +110,8 @@ mixin LogMixin on GetxController {
   void copyLogs() {
     final allLogs = logs.join("");
     Clipboard.setData(ClipboardData(text: allLogs));
-    Get.snackbar(I18n.tip.tr, I18n.copy_success.tr,
+    AppInfoBar.show(I18n.tip.tr,
+        message: I18n.copy_success.tr,
         duration: const Duration(seconds: 1));
   }
 

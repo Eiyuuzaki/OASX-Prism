@@ -21,6 +21,7 @@ import 'package:oasx/service/profile_service.dart';
 import './home_model.dart';
 import './update_info_model.dart';
 import 'dio_http_cache/dio_http_cache.dart';
+import 'package:oasx/ui/ui.dart';
 
 part 'api_client_menu_config.dart';
 part 'api_client_script.dart';
@@ -196,10 +197,10 @@ class ApiClient {
       ),
     );
     if (res.isSuccess && res.data == true) {
-      Get.snackbar(I18n.notifyTestSuccess.tr, '');
+      AppInfoBar.show(I18n.notifyTestSuccess.tr, message: '');
       return true;
     }
-    Get.snackbar(I18n.notifyTestFailed.tr, res.data.toString());
+    AppInfoBar.show(I18n.notifyTestFailed.tr, message: res.data.toString());
     return false;
   }
 

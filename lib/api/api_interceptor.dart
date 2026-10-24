@@ -2,6 +2,7 @@ import 'package:flutter_nb_net/flutter_net.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:oasx/service/profile_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 class ApiInterceptor extends Interceptor {
   static const _startTimeKey = 'api_start_time';
@@ -86,22 +87,22 @@ class ApiInterceptor extends Interceptor {
   }
 
   void showNetErrSnackBar() {
-    Get.snackbar(
+    AppInfoBar.show(
       I18n.networkError.tr,
-      I18n.networkConnectTimeout.tr,
+      message: I18n.networkConnectTimeout.tr,
       duration: const Duration(seconds: 5),
-    );
+      );
   }
 
   void showNetErrCodeSnackBar(String msg, int code) {
-    Get.snackbar(
+    AppInfoBar.show(
       I18n.networkError.tr,
-      '${I18n.networkErrorCode.tr}: $code | $msg',
+      message: '${I18n.networkErrorCode.tr}: $code | $msg',
       duration: const Duration(seconds: 5),
-    );
+      );
   }
 
   void showErrSnackBar(String title, int code, String msg) {
-    Get.snackbar('$title | $code', msg, duration: const Duration(seconds: 5));
+    AppInfoBar.show('$title | $code', message: msg, duration: const Duration(seconds: 5));
   }
 }

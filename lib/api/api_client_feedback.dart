@@ -2,22 +2,22 @@
 
 extension ApiClientFeedbackX on ApiClient {
   void showDialog(String title, String content) {
-    Get.snackbar(title, content);
+    AppInfoBar.show(title, message: content);
   }
 
   void showNetErrSnackBar() {
-    Get.snackbar(
+    AppInfoBar.show(
       I18n.networkError.tr,
-      I18n.networkConnectTimeout.tr,
+      message: I18n.networkConnectTimeout.tr,
       duration: const Duration(seconds: 5),
-    );
+      );
   }
 
   void showNetErrCodeSnackBar(String msg, int code) {
-    Get.snackbar(
+    AppInfoBar.show(
       I18n.networkError.tr,
-      '${I18n.networkErrorCode.tr}: $code | $msg',
+      message: '${I18n.networkErrorCode.tr}: $code | $msg',
       duration: const Duration(seconds: 5),
-    );
+      );
   }
 }

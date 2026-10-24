@@ -10,6 +10,7 @@ import 'package:oasx/service/script_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/check_version.dart';
 import 'package:oasx/utils/platform_utils.dart';
+import 'package:oasx/ui/ui.dart';
 
 part 'home_view_actions.dart';
 

@@ -5,6 +5,7 @@ import 'package:oasx/modules/home/controllers/error_records_controller.dart';
 import 'package:oasx/modules/home/widgets/error_records_panel.dart';
 import 'package:oasx/modules/log/script_log_controller.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 class LogCenterPanel extends StatefulWidget {
   const LogCenterPanel({
@@ -515,11 +516,11 @@ class _LogCenterPanelState extends State<LogCenterPanel> {
       _cachedEntries,
     ).map(_resolveNormalized).join('\n');
     Clipboard.setData(ClipboardData(text: visibleLogs));
-    Get.snackbar(
+    AppInfoBar.show(
       I18n.tip.tr,
-      I18n.copySuccess.tr,
+      message: I18n.copySuccess.tr,
       duration: const Duration(seconds: 1),
-    );
+      );
   }
 
   void _clearLogs() {

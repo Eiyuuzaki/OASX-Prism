@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 mixin LogMixin on GetxController {
   int get maxLines => 200;
@@ -154,11 +155,11 @@ mixin LogMixin on GetxController {
   void copyLogs() {
     final allLogs = logs.join('');
     Clipboard.setData(ClipboardData(text: allLogs));
-    Get.snackbar(
+    AppInfoBar.show(
       I18n.tip.tr,
-      I18n.copySuccess.tr,
+      message: I18n.copySuccess.tr,
       duration: const Duration(seconds: 1),
-    );
+      );
   }
 
   void toggleAutoScroll() {

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:oasx/api/github_release_model.dart';
 import 'package:oasx/service/app_update/models/app_update_plan.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/ui/ui.dart';
 
 /// This pinned compatibility build must not install newer, incompatible releases.
 class AppUpdateService extends GetxService {
@@ -35,6 +36,6 @@ class AppUpdateService extends GetxService {
   }
 
   void _showMaintenanceNotice() {
-    Get.snackbar(I18n.tip.tr, maintenanceMessage);
+    AppInfoBar.show(I18n.tip.tr, message: maintenanceMessage);
   }
 }
