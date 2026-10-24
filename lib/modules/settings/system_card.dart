@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:styled_widget/styled_widget.dart';
 
 import 'package:oasx/config/global.dart';
 import 'package:oasx/modules/settings/controllers/settings_controller.dart';
@@ -91,22 +90,14 @@ class LanguageToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final localeService = Get.find<LocaleService>();
     return Obx(() {
-      final isSelected = switch (localeService.language.value) {
-        'zh-CN' => [true, false],
-        'en-US' => [false, true],
-        _ => [true, false],
-      };
-      return ToggleButtons(
-        isSelected: isSelected,
-        onPressed: (index) {
-          localeService.switchLanguage(index == 0 ? 'zh-CN' : 'en-US');
-        },
-        borderRadius: BorderRadius.circular(10),
-        children: [
-          Text(I18n.zhCn.tr).paddingSymmetric(horizontal: 10),
-          Text(I18n.enUs.tr).paddingSymmetric(horizontal: 10),
+      return AppSegmentedButton<String>(
+        segments: [
+          AppSegment(value: 'zh-CN', label: I18n.zhCn.tr),
+          AppSegment(value: 'en-US', label: I18n.enUs.tr),
         ],
-      ).constrained(maxHeight: 40);
+        selected: localeService.language.value == 'en-US' ? 'en-US' : 'zh-CN',
+        onSelected: localeService.switchLanguage,
+      );
     });
   }
 }
@@ -122,26 +113,27 @@ class ThemeSwitcher extends StatelessWidget {
     final themeService = Get.find<ThemeService>();
     return Obx(() {
       final mode = themeService.mode.value;
-      return ToggleButtons(
-        isSelected: [
-          mode == AppThemeMode.system,
-          mode == AppThemeMode.light,
-          mode == AppThemeMode.dark,
+      return AppSegmentedButton<AppThemeMode>(
+        segments: const [
+          AppSegment(
+            value: AppThemeMode.system,
+            label: '',
+            icon: Icons.brightness_auto_rounded,
+          ),
+          AppSegment(
+            value: AppThemeMode.light,
+            label: '',
+            icon: Icons.light_mode_rounded,
+          ),
+          AppSegment(
+            value: AppThemeMode.dark,
+            label: '',
+            icon: Icons.dark_mode_rounded,
+          ),
         ],
-        onPressed: (index) => themeService.setMode(
-          switch (index) {
-            0 => AppThemeMode.system,
-            1 => AppThemeMode.light,
-            _ => AppThemeMode.dark,
-          },
-        ),
-        borderRadius: BorderRadius.circular(10),
-        children: [
-          Icon(Icons.brightness_auto, size: 18).paddingSymmetric(horizontal: 10),
-          Icon(Icons.light_mode, size: 18).paddingSymmetric(horizontal: 10),
-          Icon(Icons.dark_mode, size: 18).paddingSymmetric(horizontal: 10),
-        ],
-      ).constrained(maxHeight: 40);
+        selected: mode,
+        onSelected: themeService.setMode,
+      );
     });
   }
 }

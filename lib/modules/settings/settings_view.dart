@@ -27,8 +27,6 @@ class SettingsView extends StatefulWidget {
 
 class _SettingsViewState extends State<SettingsView> {
   static const double _layoutSpacing = 8.0;
-  static const double _wideLayoutBreakpoint = 960.0;
-  static const double _navWidth = 220.0;
   static const double _topAlignmentTolerance = 12.0;
 
   final ScrollController _scrollController = ScrollController();
@@ -83,33 +81,31 @@ class _SettingsViewState extends State<SettingsView> {
     final body = SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= _wideLayoutBreakpoint;
           final settingList = _buildSettingList(keyboardInset);
 
-          if (!isWide) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (fluent) _buildPageTitle(),
-                Expanded(child: settingList.paddingOnly(left: 8, right: 8)),
-              ],
-            );
-          }
-
+          // 单列布局：大标题 + 卡片列表（不再有左侧分区导航）。
+          //
+          // 设置只有三个分区，撑不起一个导航栏，反而制造了"三项菜单"
+          // 和"滚到底高亮不跟手"的问题。分区标识回到卡片上方的分组
+          // 标题（见 SettingCard.showTitle）。
+          //
+          // 左右内边距统一在这里给，保证所有卡片（含最后一张）左右
+          // 严格对齐——之前卡片各自带 margin，出现过底部卡片偏移。
+          final inset = fluent ? 24.0 : 8.0;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 页面大标题（LLT/Win11 的 Settings 标题），占满整行宽度
               if (fluent) _buildPageTitle(),
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildPrimaryNav(),
-                    const SizedBox(width: 16),
-                    Expanded(child: settingList),
-                  ],
-                ).paddingOnly(left: 24, right: 24, bottom: 16),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    inset,
+                    0,
+                    inset,
+                    fluent ? 16 : 0,
+                  ),
+                  child: settingList,
+                ),
               ),
             ],
           );
@@ -191,31 +187,6 @@ class _SettingsViewState extends State<SettingsView> {
         _selectedSectionIndex;
   }
 
-  Future<void> _scrollToSection(int index) async {
-    if (index < 0 || index >= _sections.length) {
-      return;
-    }
-
-    final targetContext = _sections[index].key.currentContext;
-    if (targetContext == null) {
-      return;
-    }
-
-    setState(() {
-      _selectedSectionIndex = index;
-      _lockSelectionToClickedNav = true;
-    });
-
-    _isAutoScrolling = true;
-    await Scrollable.ensureVisible(
-      targetContext,
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeInOutCubic,
-      alignment: 0,
-    );
-    _isAutoScrolling = false;
-  }
-
   Widget _buildSettingList(double keyboardInset) {
     return Scrollbar(
       controller: _scrollController,
@@ -272,137 +243,8 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  /// 左侧分区导航：**单个容器**装所有分区项（LLT 风格）。
-  ///
-  /// 选中项是「左侧 3×20 蓝条 + 圆角高亮块」，与顶部导航栏的选中态一致。
-  Widget _buildPrimaryNav() {
-    final theme = Theme.of(context);
-    final p = FluentPalette.of(context);
-    final accent = theme.colorScheme.primary;
-
-    return SizedBox(
-      width: _navWidth,
-      child: AppCard(
-        variant: AppCardVariant.elevated,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(_sections.length, (index) {
-            final isSelected = index == _selectedSectionIndex;
-            return _SectionNavItem(
-              label: _sections[index].navTitleBuilder(),
-              selected: isSelected,
-              accent: accent,
-              textColor: isSelected ? p.textPrimary : p.textSecondary,
-              fill: isSelected ? p.rowHover : Colors.transparent,
-              onTap: () => _scrollToSection(index),
-            );
-          }),
-        ),
-      ),
-    );
-  }
 }
 
-/// 分区导航项：左侧蓝条 + 圆角高亮块（与顶部导航栏同款选中态）。
-class _SectionNavItem extends StatefulWidget {
-  const _SectionNavItem({
-    required this.label,
-    required this.selected,
-    required this.accent,
-    required this.textColor,
-    required this.fill,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final Color accent;
-  final Color textColor;
-  final Color fill;
-  final VoidCallback onTap;
-
-  @override
-  State<_SectionNavItem> createState() => _SectionNavItemState();
-}
-
-class _SectionNavItemState extends State<_SectionNavItem> {
-  bool _hovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final p = FluentPalette.of(context);
-    const anim = Duration(milliseconds: 160);
-
-    final fill = widget.selected
-        ? widget.fill
-        : (_hovering ? p.rowPressed : Colors.transparent);
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: SizedBox(
-          height: 44,
-          child: Row(
-            children: [
-              // 左侧 3×20 蓝条
-              SizedBox(
-                width: 8,
-                child: AnimatedOpacity(
-                  duration: anim,
-                  opacity: widget.selected ? 1 : 0,
-                  child: Center(
-                    child: Container(
-                      width: 3,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: widget.accent,
-                        borderRadius: BorderRadius.circular(1.5),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: AnimatedContainer(
-                  duration: anim,
-                  curve: Curves.easeOut,
-                  decoration: BoxDecoration(
-                    color: fill,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        widget.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: widget.textColor,
-                          fontWeight: widget.selected
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _SettingsSection {
   _SettingsSection({

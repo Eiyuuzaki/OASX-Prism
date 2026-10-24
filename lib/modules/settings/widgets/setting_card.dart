@@ -16,10 +16,18 @@ class SettingCard extends StatelessWidget {
   final String title;
   final List<SettingItem> items;
 
+  /// 是否在卡片上方显示分区标题。
+  ///
+  /// Windows 上**显示**：设置页已改成单列布局、去掉了左侧分区导航，
+  /// 分区只能靠卡片上方的标题来标识（否则三组设置混在一起分不清）。
+  /// 其它平台保持 Material 的原样（标题在卡片内）。
+  final bool showTitle;
+
   const SettingCard({
     super.key,
     required this.title,
     required this.items,
+    this.showTitle = true,
   });
 
   @override
@@ -64,18 +72,21 @@ class SettingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 分区标题：20px 粗体（对齐 Legion Toolkit 的 "Power"/"Graphics"）
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 10),
-            child: Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: p.textPrimary,
+          // 分区标题：默认隐藏（左侧导航已指示当前位置）。
+          // 需要时打开 showTitle，20px 粗体、用 textPrimary——
+          // 标题浮在材质上，灰色对比度不足。
+          if (showTitle)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 10),
+              child: Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: p.textPrimary,
+                ),
               ),
             ),
-          ),
           // 每一项一张独立卡片（LLT 风格），卡片间 8px 间隙
           for (var i = 0; i < items.length; i++) ...[
             if (i > 0) const SizedBox(height: 8),

@@ -194,7 +194,14 @@ class _FluentNavItemState extends State<_FluentNavItem> {
     } else {
       fill = Colors.transparent;
     }
-    final fg = selected ? accent : p.textSecondary;
+    // 未选中项用 textPrimary 而不是 textSecondary：
+    //
+    // 侧栏是**完全透明**的，文字直接浮在 Acrylic 材质上；材质透出壁纸
+    // 的明暗变化，次级灰（#5D5D5D）在这种底上对比度不够，11px 的小字
+    // 尤其糊。主文字色（#1B1B1B）才压得住。
+    //
+    // 卡片内的说明文字仍用次级灰——那是实心白底，够清晰。
+    final fg = selected ? accent : p.textPrimary;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
