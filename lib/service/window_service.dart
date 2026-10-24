@@ -161,18 +161,17 @@ class WindowService extends GetxService with WindowListener {
       minimumSize: minimumSize,
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
-      // **用 normal 而不是 hidden**。
+      // 用 hidden：系统标题栏不画，自绘标题栏接管。
       //
-      // window_manager 在 TitleBarStyle.hidden 下会主动把客户区
-      // 左右各缩进 8px、底部缩进 8px（见 window_manager_plugin.cpp
-      // 的 WM_NCCALCSIZE 分支，注释说明是为了保留边缘拉伸热区，
-      // issue #483）。那 8px 由系统填成纯白 —— 就是窗口四周
-      // 那圈明显的白边。
+      // 千万不要改成 normal——那样原生标题栏会重新出现（实测客户区
+      // 比窗口矮 56px，多出来的正是系统标题栏），而且它会覆盖掉
+      // AcrylicService 对 WS_CAPTION 的清理。
       //
-      // 我们不做边缘拉伸（窗口尺寸固定），所以不需要那个热区；
-      // 改用 normal 后客户区等于窗口矩形，白边消失。
-      // 系统标题栏本身由 AcrylicService 去掉 WS_CAPTION 处理。
-      titleBarStyle: TitleBarStyle.normal,
+      // hidden 的代价是 window_manager 在 WM_NCCALCSIZE 里为拖边
+      // 热区把客户区左右各缩进 8px（issue #483），表现为窗口右侧
+      // 一条浅色窄带。这是已知取舍：要自绘标题栏就必须接受它，
+      // 或者自己子类化窗口过程（复杂且风险高）。
+      titleBarStyle: TitleBarStyle.hidden,
     );
   }
 

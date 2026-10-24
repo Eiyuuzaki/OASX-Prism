@@ -67,13 +67,87 @@ class AcrylicService {
     await _applyEffectInternal(dark: useDark);
 
     // 窗口真正显示之后 DWM 才处理合成属性，补几轮覆盖启动期。
-    for (final delay in const [120, 400, 900]) {
-      Future.delayed(Duration(milliseconds: delay), () async {
-        if (!_supported || !_pluginReady) return;
-        if (!transparentBackground) return;
-        await _applyDwmBackdrop(dark: useDark);
-      });
+    //
+    // 只在**首次应用**时补（_retryDone 标记）：每次聚焦都重设会让
+    // 窗口闪一下——setEffect 内部先 ACCENT_DISABLED 归零，再设回来，
+    // 中间那一帧就是"闪一下另一种主题"的来源。
+    if (!_settled) {
+      _settled = true;
+      for (final delay in const [150, 450]) {
+        Future.delayed(Duration(milliseconds: delay), () async {
+          if (!_supported || !_pluginReady) return;
+          if (!transparentBackground) return;
+          await _reapplySameEffect(dark: useDark);
+        });
+      }
     }
+  }
+
+  /// 首次启动是否已经补设过（避免每次聚焦重复补设导致闪烁）。
+  static bool _settled = false;
+
+  /// Acrylic 的染色。
+  ///
+  /// **浅色 0x8C（55% 白）**是三轮试出来的平衡点：
+  /// - 0x66（40%）透是透，好看，但深色壁纸透上来后浅色主题的深色
+  ///   文字可读性差
+  /// - 0xBB（73%）可读性够了，但整窗发白、材质感明显变弱（"不好看"）
+  /// - 0x8C 配卡片 48% 白：文字压得住，材质纹理也还看得见
+  ///
+  /// 深色保持 0xCC 不变——用户反馈深色模式本来就没问题，不该动。
+  static Color _tintFor(bool dark) =>
+      dark ? const Color(0xCC0A0A0C) : const Color(0x8CFFFFFF);
+
+  /// 用当前效果重设一次，**不切换效果类型**（不闪）。
+  ///
+  /// 与 [_applyEffectInternal] 的区别：不先归零再设，直接重发当前
+  /// setEffect，DWM 不会经历"无材质"的中间帧。
+  ///
+  /// 只补 `MARGINS`（让客户区透明），**不碰 SYSTEMBACKDROP_TYPE**：
+  /// Acrylic 走 accent 策略，与 SYSTEMBACKDROP 抢同一层合成，
+  /// 设 backdrop 会让窗口先渲染成 Mica 再被 accent 覆盖回来——
+  /// 这正是"切回来先闪一下深色界面再闪回"的来源。
+  static Future<void> _reapplySameEffect({required bool dark}) async {
+    final tint = _tintFor(dark);
+    try {
+      await Window.setEffect(effect: WindowEffect.acrylic, color: tint, dark: dark);
+      await _extendFrameOnly(dark: dark);
+    } catch (_) {}
+  }
+
+  /// 只设玻璃边距（客户区交给 DWM）+ 明暗变体，不动 backdrop 类型。
+  ///
+  /// **必须显式设 `USE_IMMERSIVE_DARK_MODE`**：flutter_acrylic 的
+  /// `setEffect(acrylic)` 只把 dark 用在 accent 颜色上，不设这个 DWM
+  /// 属性；一旦之前有别的调用把它置成 1，浅色主题也会一直走深色变体
+  /// （表现为窗口整体偏暗、与浅色 UI 不协调）。
+  static Future<void> _extendFrameOnly({bool? dark}) async {
+    if (!Platform.isWindows) return;
+    try {
+      final user32 = DynamicLibrary.open('user32.dll');
+      final dwmapi = DynamicLibrary.open('dwmapi.dll');
+      final hwnd = _findOwnWindow(user32);
+      if (hwnd == 0) return;
+      final extendFrame = dwmapi.lookupFunction<
+          Int32 Function(IntPtr, Pointer<MARGINS>),
+          int Function(int, Pointer<MARGINS>)>('DwmExtendFrameIntoClientArea');
+      final margins = calloc<MARGINS>();
+      margins.ref.cxLeftWidth = -1;
+      margins.ref.cxRightWidth = -1;
+      margins.ref.cyTopHeight = -1;
+      margins.ref.cyBottomHeight = -1;
+      extendFrame(hwnd, margins);
+      calloc.free(margins);
+
+      if (dark != null) {
+        final setAttr = dwmapi.lookupFunction<
+            Int32 Function(IntPtr, Uint32, Pointer<Int32>, Uint32),
+            int Function(int, int, Pointer<Int32>, int)>('DwmSetWindowAttribute');
+        final darkMode = calloc<Int32>()..value = dark ? 1 : 0;
+        setAttr(hwnd, 20, darkMode, 4);
+        calloc.free(darkMode);
+      }
+    } catch (_) {}
   }
 
   /// 应用材质。
@@ -91,22 +165,47 @@ class AcrylicService {
   /// 所以继续借它的 `setEffect`；后两步用 FFI 补（它在部分 Win11
   /// 构建上会漏掉或顺序颠倒）。
   static Future<void> _applyEffectInternal({required bool dark}) async {
+    // 用 Acrylic 而不是 Mica Alt：
+    //
+    // Mica 系（SYSTEMBACKDROP）只取壁纸的**平均色调**，深色壁纸配浅色
+    // 变体会被提亮成一片中性灰（实测 238,238,238、蓝偏移 0），
+    // 完全看不出材质纹理，用户会觉得"材质没了"。
+    //
+    // Acrylic 是实时模糊 + tint，能真正看到背景的明暗与色彩层次；
+    // tint 用 35% 白把整体压回浅色，浅色主题下深色文字仍然可读。
+    final tint = _tintFor(dark);
     try {
-      // 1) 借插件的 setEffect：内部会做 ACCENT_DISABLED 重置 + MARGINS + backdrop
-      await Window.setEffect(effect: WindowEffect.tabbed, dark: dark);
-      // 2) FFI 再补一遍 DWM 属性，确保落地
-      final ok = await _applyDwmBackdrop(dark: dark);
-      transparentBackground = ok;
-      debugPrint('AcrylicService: tabbed/mica-alt applied (dark=$dark)');
+      await Window.setEffect(effect: WindowEffect.acrylic, color: tint, dark: dark);
+      // 必须补 MARGINS：setEffect 内部只在 Mica/Tabbed 分支设玻璃边距，
+      // Acrylic 分支只做 accent 策略。不补的话客户区仍是不透明的，
+      // 模糊效果被自己盖住，表现为"整窗一片中性灰"。
+      await _extendFrameOnly(dark: dark);
+      transparentBackground = true;
+      debugPrint('AcrylicService: acrylic tint=0x'
+          '${tint.toARGB32().toRadixString(16)} (dark=$dark) OK');
     } catch (e) {
-      debugPrint('AcrylicService: tabbed failed: $e → 尝试纯 DWM 路径');
-      final ok = await _applyDwmBackdrop(dark: dark);
-      transparentBackground = ok;
+      debugPrint('AcrylicService: acrylic failed: $e → 回退 Mica Alt');
+      try {
+        await Window.setEffect(effect: WindowEffect.tabbed, dark: dark);
+        final ok = await _applyDwmBackdrop(dark: dark);
+        transparentBackground = ok;
+      } catch (e2) {
+        debugPrint('AcrylicService: tabbed failed: $e2');
+        transparentBackground = false;
+      }
     }
   }
 
-  /// 设置 DWM backdrop。返回是否成功。
-  static Future<bool> _applyDwmBackdrop({required bool dark}) async {
+  /// 设置 DWM 的一层合成属性。返回是否成功。
+  ///
+  /// [withBackdrop] 为 true 时把 `SYSTEMBACKDROP_TYPE` 设为 Mica Alt；
+  /// **Acrylic 必须传 false**——Acrylic 走的是 accent 策略，与
+  /// SYSTEMBACKDROP 互斥，强行设 backdrop 会覆盖掉 Acrylic，
+  /// 表现为"先闪成另一种材质再闪回来"。
+  static Future<bool> _applyDwmBackdrop({
+    required bool dark,
+    bool withBackdrop = true,
+  }) async {
     if (!Platform.isWindows) return false;
     try {
       final user32 = DynamicLibrary.open('user32.dll');
@@ -162,21 +261,26 @@ class AcrylicService {
           int Function(int, int, Pointer<Int32>, int)>('DwmSetWindowAttribute');
 
       // 2) SYSTEMBACKDROP_TYPE = 4（DWMSBT_TABBEDWINDOW，壁纸透出最明显）
-      final backdrop = calloc<Int32>()..value = 4;
-      final hrBackdrop = setAttr(hwnd, 38, backdrop, 4);
-      calloc.free(backdrop);
+      //
+      // Acrylic 模式下跳过：它用 accent 策略，与 SYSTEMBACKDROP 互斥。
+      var hrBackdrop = 0;
+      if (withBackdrop) {
+        final backdrop = calloc<Int32>()..value = 4;
+        hrBackdrop = setAttr(hwnd, 38, backdrop, 4);
+        calloc.free(backdrop);
+      }
 
       // 3) 明暗变体
       final darkMode = calloc<Int32>()..value = dark ? 1 : 0;
       final hrDark = setAttr(hwnd, 20, darkMode, 4);
       calloc.free(darkMode);
 
-      debugPrint('AcrylicService: DWM backdrop hwnd=$hwnd '
+      debugPrint('AcrylicService: DWM hwnd=$hwnd '
           'frame=0x${hrFrame.toRadixString(16)} '
-          'backdrop=0x${hrBackdrop.toRadixString(16)} '
+          'backdrop=${withBackdrop ? "0x${hrBackdrop.toRadixString(16)}" : "跳过(Acrylic)"} '
           'dark=0x${hrDark.toRadixString(16)} (dark=$dark)');
 
-      return hrFrame == 0 && hrBackdrop == 0;
+      return hrFrame == 0 && (withBackdrop ? hrBackdrop == 0 : true);
     } catch (e) {
       debugPrint('AcrylicService: DWM backdrop failed: $e');
       return false;
@@ -252,9 +356,15 @@ class AcrylicService {
   }
 
   /// 仅重设 DWM 材质，不触发界面重建。
-  static Future<void> reapply({bool dark = false}) async {
+  /// 窗口状态变化（聚焦/还原/最大化）时补设材质。
+  ///
+  /// **走轻量路径**：直接重发当前效果，不先归零。
+  /// 之前的实现是调 `applyEffect`（内部先 `setEffect(disabled)` 再设回来），
+  /// 中间那一帧材质消失、窗口透出另一种底色 —— 用户看到的就是
+  /// "切回来先闪一下深色界面再闪回"。
+  static Future<void> reapply({bool? dark}) async {
     if (!_supported || !_pluginReady) return;
-    await applyEffect(dark: dark);
+    await _reapplySameEffect(dark: dark ?? false);
   }
 }
 
