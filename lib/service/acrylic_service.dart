@@ -66,25 +66,73 @@ class AcrylicService {
 
     await _applyEffectInternal(dark: useDark);
 
-    // 窗口真正显示之后 DWM 才处理合成属性，补几轮覆盖启动期。
+    // 启动期补设：DWM 只处理**已显示**窗口的合成属性，而 applyEffect
+    // 往往跑在窗口真正显示之前。之前用固定延迟补 2 次，赶不上就永久
+    // 失效——表现为"第一次启动没材质、重启又有"的时好时坏。
     //
-    // 只在**首次应用**时补（_retryDone 标记）：每次聚焦都重设会让
-    // 窗口闪一下——setEffect 内部先 ACCENT_DISABLED 归零，再设回来，
-    // 中间那一帧就是"闪一下另一种主题"的来源。
+    // 改成**轮询直到确认生效**：每 200ms 检查 DWM 属性是否到位，
+    // 成功即停；最多 25 次（约 5 秒）。只在首次启动跑，避免每次聚焦
+    // 都重设导致闪烁。
     if (!_settled) {
       _settled = true;
-      for (final delay in const [150, 450]) {
-        Future.delayed(Duration(milliseconds: delay), () async {
-          if (!_supported || !_pluginReady) return;
-          if (!transparentBackground) return;
-          await _reapplySameEffect(dark: useDark);
-        });
-      }
+      _scheduleStartupRetry(dark: useDark);
     }
   }
 
   /// 首次启动是否已经补设过（避免每次聚焦重复补设导致闪烁）。
   static bool _settled = false;
+
+  /// 启动期轮询补设，直到 DWM 确认材质已生效。
+  static void _scheduleStartupRetry({required bool dark}) {
+    var attempts = 0;
+    const maxAttempts = 25;
+    const interval = Duration(milliseconds: 200);
+
+    void tick() {
+      if (!_supported || !_pluginReady) return;
+
+      attempts++;
+      if (_isBackdropSettled()) {
+        debugPrint('AcrylicService: 材质确认生效（第 $attempts 次检查）');
+        return;
+      }
+      if (attempts >= maxAttempts) {
+        debugPrint('AcrylicService: 启动补设达上限，材质可能未生效');
+        return;
+      }
+
+      _reapplySameEffect(dark: dark).then((_) {
+        Future.delayed(interval, tick);
+      });
+    }
+
+    Future.delayed(interval, tick);
+  }
+
+  /// 检查 DWM 的 backdrop 属性是否已是目标值（3 = Acrylic）。
+  ///
+  /// 只确认**属性设置成功**，不代表画面已渲染；但属性丢失是启动失败
+  /// 的主要形态，能覆盖绝大多数情况。
+  static bool _isBackdropSettled() {
+    if (!Platform.isWindows) return false;
+    try {
+      final dwmapi = DynamicLibrary.open('dwmapi.dll');
+      final user32 = DynamicLibrary.open('user32.dll');
+      final hwnd = _findOwnWindow(user32);
+      if (hwnd == 0) return false;
+
+      final getAttr = dwmapi.lookupFunction<
+          Int32 Function(IntPtr, Uint32, Pointer<Int32>, Uint32),
+          int Function(int, int, Pointer<Int32>, int)>('DwmGetWindowAttribute');
+      final value = calloc<Int32>();
+      final hr = getAttr(hwnd, 38, value, 4);
+      final ok = hr == 0 && value.value == 3;
+      calloc.free(value);
+      return ok;
+    } catch (_) {
+      return false;
+    }
+  }
 
   /// Acrylic 的染色。
   ///
