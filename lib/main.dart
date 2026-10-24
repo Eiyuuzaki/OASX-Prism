@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/service/profile_service.dart';
 import 'package:oasx/config/theme.dart'
-    show amoledDarkTheme, darkTheme, lightTheme;
+    show amoledDarkTheme, darkTheme, lightTheme, initSystemAccentColor;
 import 'package:oasx/modules/settings/controllers/settings_controller.dart';
 import 'package:oasx/service/autostart_service.dart';
 import 'package:oasx/service/app_update_service.dart';
@@ -28,6 +28,9 @@ void main() async {
   // ★ 官方文档要求：Window.initialize() 必须在 runApp 之前调用。
   // 之前放在 initService 里（window_manager 初始化之后）会导致材质不生效。
   await AcrylicService.initializePlugin();
+
+  // 系统强调色要在 runApp 前就位（主题 getter 同步取值）
+  await initSystemAccentColor();
 
   await initService();
 

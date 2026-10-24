@@ -1,3 +1,5 @@
+import 'dart:io' show Platform, Process;
+
 import 'package:flutter/material.dart';
 import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:oasx/service/acrylic_service.dart';
@@ -13,34 +15,49 @@ bool get _usesTransparentScaffold =>
     AcrylicService.transparentBackground ||
     AcrylicService.mobileFrostedBackground;
 
-/// 用枚举太麻烦了
-enum ColorSeed {
-  baseColor('M3 Baseline', Color(0xff6750a4)),
-  indigo('Indigo', Colors.indigo),
-  blue('Blue', Colors.blue),
-  teal('Teal', Colors.teal),
-  green('Green', Colors.green),
-  yellow('Yellow', Colors.yellow),
-  orange('Orange', Colors.orange),
-  deepOrange('Deep Orange', Colors.deepOrange),
-  pink('Pink', Colors.pink);
+/// 系统强调色缓存（Win11 原生应用的标准行为：跟随用户在系统设置里
+/// 选的强调色）。启动时由 [initSystemAccentColor] 读一次注册表。
+Color? _systemAccent;
 
-  const ColorSeed(this.label, this.color);
-  final String label;
-  final Color color;
+/// Windows 默认强调色（读不到注册表时的回退值）。
+const Color _fallbackAccent = Color(0xFF0078D4);
+
+/// 读取系统强调色（`HKCU\...\DWM\ColorizationColor`，0xAARRGGBB）。
+///
+/// 必须在 runApp 之前 await——主题 getter 是同步的，强调色要提前就位。
+Future<void> initSystemAccentColor() async {
+  if (!Platform.isWindows) {
+    _systemAccent = _fallbackAccent;
+    return;
+  }
+  try {
+    final result = await Process.run('reg', [
+      'query',
+      r'HKCU\Software\Microsoft\Windows\DWM',
+      '/v',
+      'ColorizationColor',
+    ]);
+    final match = RegExp(
+      r'0x([0-9a-fA-F]+)',
+    ).firstMatch(result.stdout.toString().trim());
+    if (match == null) {
+      _systemAccent = _fallbackAccent;
+      return;
+    }
+    // DWORD 是 0xAARRGGBB；实际存储的 alpha 常为 00，强制不透明
+    final value = int.parse(match.group(1)!, radix: 16);
+    _systemAccent = Color(value | 0xFF000000);
+  } catch (_) {
+    _systemAccent = _fallbackAccent;
+  }
 }
 
-const Map<String, Color> colorSeedMap = {
-  'M3 Baseline': Color(0xff6750a4),
-  'Indigo': Colors.indigo,
-  'Blue': Colors.blue,
-  'Teal': Colors.teal,
-  'Green': Colors.green,
-  'Yellow': Colors.yellow,
-  'Orange': Colors.orange,
-  'Deep Orange': Colors.deepOrange,
-  'Pink': Colors.pink
-};
+/// 当前强调色（系统色，回退 Windows 默认蓝）。
+Color get accentColor => _systemAccent ?? _fallbackAccent;
+
+/// 深浅底上该配的文字色（亮度判定，与 FluentTokens._onColor 同逻辑）。
+Color _onColorFor(Color bg) =>
+    bg.computeLuminance() > 0.5 ? const Color(0xFF1B1B1B) : Colors.white;
 
 /// 浅色主题。
 ///
@@ -49,7 +66,7 @@ const Map<String, Color> colorSeedMap = {
 /// 随毛玻璃开关变化。写成顶层变量的话只在启动时求值一次，
 /// 关闭毛玻璃后主题仍停留在旧值，界面会变成黑灰。
 ThemeData get lightTheme => ThemeData(
-  colorSchemeSeed: ColorSeed.baseColor.color,
+  colorScheme: _lightScheme(accentColor),
   useMaterial3: true,
   brightness: Brightness.light,
   textTheme: const TextTheme(
@@ -164,7 +181,7 @@ ThemeData get amoledDarkTheme => darkTheme.copyWith(
 
 ThemeData get darkTheme => ThemeData(
   useMaterial3: true,
-  colorSchemeSeed: ColorSeed.baseColor.color,
+  colorScheme: _darkScheme(accentColor),
   brightness: Brightness.dark,
   textTheme: const TextTheme(
     bodyLarge: TextStyle(),
@@ -224,3 +241,99 @@ ThemeData get darkTheme => ThemeData(
     ),
   ),
 );
+
+
+/// 浅色 ColorScheme：WinUI 实际观感值，不走 M3 tonal 调色。
+///
+/// M3 的 tonal 浅色底偏紫/偏灰白，不像 Windows 软件；这里 primary 用
+/// 系统强调色，surface/outline/error 用 Fluent 体系的值。
+ColorScheme _lightScheme(Color accent) {
+  final onAccent = _onColorFor(accent);
+  final onAccentSoft = Color.alphaBlend(
+    accent.withValues(alpha: 0.60),
+    Colors.black,
+  );
+  return ColorScheme(
+    brightness: Brightness.light,
+    primary: accent,
+    onPrimary: onAccent,
+    primaryContainer: Color.alphaBlend(
+      accent.withValues(alpha: 0.20),
+      Colors.white,
+    ),
+    onPrimaryContainer: onAccentSoft,
+    secondary: accent,
+    onSecondary: onAccent,
+    secondaryContainer: Color.alphaBlend(
+      accent.withValues(alpha: 0.14),
+      Colors.white,
+    ),
+    onSecondaryContainer: onAccentSoft,
+    tertiary: accent,
+    onTertiary: onAccent,
+    surface: const Color(0xFFF3F3F3),
+    onSurface: const Color(0xFF1B1B1B),
+    surfaceContainerLowest: Colors.white,
+    surfaceContainerLow: const Color(0xFFFAFAFA),
+    surfaceContainer: const Color(0xFFF3F3F3),
+    surfaceContainerHigh: const Color(0xFFEEEEEE),
+    surfaceContainerHighest: const Color(0xFFE5E5E5),
+    onSurfaceVariant: const Color(0xFF5D5D5D),
+    outline: const Color(0xFFC8C8C8),
+    outlineVariant: const Color(0xFFE5E5E5),
+    error: const Color(0xFFC50F1F),
+    onError: Colors.white,
+    errorContainer: const Color(0xFFFDE7E9),
+    onErrorContainer: const Color(0xFF8E1B2A),
+    inverseSurface: const Color(0xFF202020),
+    onInverseSurface: const Color(0xFFFFFFFF),
+    inversePrimary: accent,
+    scrim: Colors.black,
+  );
+}
+
+/// 深色 ColorScheme：比页面底亮一档的层级色 + 白系描边。
+ColorScheme _darkScheme(Color accent) {
+  final onAccent = _onColorFor(accent);
+  final base = const Color(0xFF202020);
+  return ColorScheme(
+    brightness: Brightness.dark,
+    primary: accent,
+    onPrimary: onAccent,
+    primaryContainer: Color.alphaBlend(
+      accent.withValues(alpha: 0.35),
+      base,
+    ),
+    onPrimaryContainer: Color.alphaBlend(
+      accent.withValues(alpha: 0.55),
+      Colors.white,
+    ),
+    secondary: accent,
+    onSecondary: onAccent,
+    secondaryContainer: Color.alphaBlend(
+      accent.withValues(alpha: 0.25),
+      base,
+    ),
+    onSecondaryContainer: const Color(0xFFE8E8E8),
+    tertiary: accent,
+    onTertiary: onAccent,
+    surface: base,
+    onSurface: const Color(0xFFFFFFFF),
+    surfaceContainerLowest: const Color(0xFF1A1A1A),
+    surfaceContainerLow: base,
+    surfaceContainer: const Color(0xFF272727),
+    surfaceContainerHigh: const Color(0xFF2C2C2C),
+    surfaceContainerHighest: const Color(0xFF323232),
+    onSurfaceVariant: const Color(0xFFC8C8C8),
+    outline: const Color(0x66FFFFFF),
+    outlineVariant: const Color(0x26FFFFFF),
+    error: const Color(0xFFFF99A4),
+    onError: const Color(0xFF390C13),
+    errorContainer: const Color(0xFF3F1A1A),
+    onErrorContainer: const Color(0xFFFFC7C7),
+    inverseSurface: const Color(0xFFF3F3F3),
+    onInverseSurface: const Color(0xFF1B1B1B),
+    inversePrimary: accent,
+    scrim: Colors.black,
+  );
+}

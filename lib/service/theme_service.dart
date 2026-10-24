@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:oasx/config/theme.dart';
 import 'package:oasx/service/acrylic_service.dart';
 import 'package:oasx/modules/common/models/storage_key.dart';
 
@@ -18,14 +17,11 @@ class ThemeService extends GetxService {
   final _dark = false.obs;
 
   final _amoled = false.obs;
-  final _color = ColorSeed.baseColor.color.obs;
 
   bool get isDarkMode => _dark.value;
 
   /// AMOLED 纯黑深色：仅深色模式下有意义（OLED 省电 + 对比度拉满）
   bool get isAmoled => _amoled.value;
-
-  Color get color => _color.value;
 
   /// 传给 GetMaterialApp.themeMode
   ThemeMode get themeMode => switch (mode.value) {

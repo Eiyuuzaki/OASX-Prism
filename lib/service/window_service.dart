@@ -273,29 +273,37 @@ class WindowService extends GetxService with WindowListener {
   // 状态变化后重设一次材质，代价极小且幂等。
 
   @override
-  void onWindowRestore() => _reapplyMaterial();
+  void onWindowRestore() => _rebuildMaterial();
   @override
-  void onWindowMaximize() => _reapplyMaterial();
+  void onWindowMaximize() => _rebuildMaterial();
   @override
-  void onWindowUnmaximize() => _reapplyMaterial();
+  void onWindowUnmaximize() => _rebuildMaterial();
 
-  /// 窗口获得焦点时补设材质。
+  /// 窗口获得焦点时轻量补设材质。
   ///
-  /// **这是玻璃边距能生效的关键时机**：`DwmExtendFrameIntoClientArea`
-  /// 只对已进入 DWM 合成树的窗口有效，而窗口在真正显示前还没进去。
-  /// 启动时 applyEffect 早于显示执行，固定延迟重试也可能赶不上；
-  /// 窗口第一次获得焦点必然发生在显示之后，挂在这里最可靠。
+  /// 普通聚焦切换不会销毁 DWM 的 backdrop 合成，轻量重发（不归零）
+  /// 就够，且不会闪。**注意它对最小化→还原无效**：最小化时 DWM 真正
+  /// 销毁了合成，必须走 [_rebuildMaterial] 的完整重建才能唤醒。
   @override
   void onWindowFocus() => _reapplyMaterial();
 
+  /// 还原 / 最大化后**完整重建**材质。
+  ///
+  /// 这些状态变化会让 DWM 销毁并重建合成层，轻量重发会被忽略
+  /// （实测：SYSTEMBACKDROP_TYPE=3 属性还在、画面却是纯灰）。
+  /// 走完整 `applyEffect`（内部先 ACCENT_DISABLED 归零再设）才能唤醒；
+  /// 还原/最大化本身带系统动画，归零瞬间不会构成可见闪烁。
+  void _rebuildMaterial() {
+    if (!PlatformUtils.isDesktop) return;
+    final dark = Get.isRegistered<ThemeService>()
+        ? Get.find<ThemeService>().isDarkMode
+        : false;
+    unawaited(AcrylicService.applyEffect(dark: dark));
+  }
+
   void _reapplyMaterial() {
     if (!PlatformUtils.isDesktop) return;
-    final themeService = Get.isRegistered<ThemeService>()
-        ? Get.find<ThemeService>()
-        : null;
-    unawaited(
-      AcrylicService.reapply(dark: themeService?.isDarkMode ?? false),
-    );
+    unawaited(AcrylicService.reapply());
   }
 
   @override
