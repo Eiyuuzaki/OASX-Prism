@@ -25,72 +25,55 @@ class SystemSettingsCard extends StatelessWidget {
       title: I18n.systemSetting.tr,
       items: [
         SettingItem(
+          icon: Icons.palette_outlined,
           left: Text(I18n.changeTheme.tr),
+          description: '浅色 / 深色 / 跟随系统',
           right: const ThemeSwitcher(),
         ),
         SettingItem(
+          icon: Icons.translate_rounded,
           left: Text(I18n.changeLanguage.tr),
+          description: '界面显示语言',
           right: const LanguageToggle(),
         ),
         // 窗口材质默认开启（Mica，系统材质开销低），不再提供开关
         if (PlatformUtils.isDesktop)
           SettingItem(
+            icon: Icons.open_in_full_rounded,
             left: Text(I18n.rememberWindowPositionSize.tr),
+            description: '下次启动恢复上次的窗口大小与位置',
             right: const WindowStateSwitch(),
           ),
         if (PlatformUtils.isDesktop)
           SettingItem(
-            left: Row(
-              children: [
-                Text(I18n.minimizeToSystemTray.tr),
-                Tooltip(
-                  message: I18n.minimizeToSystemTrayHelp.tr,
-                  child: const Icon(Icons.help_outline, size: 16),
-                ).paddingOnly(left: 5),
-              ],
-            ),
+            icon: Icons.minimize_rounded,
+            left: Text(I18n.minimizeToSystemTray.tr),
+            description: I18n.minimizeToSystemTrayHelp.tr,
             right: const SystemTraySwitch(),
           ),
         if (PlatformUtils.isDesktop)
           SettingItem(
-            left: Row(
-              children: [
-                Text(I18n.stopBackendOnExit.tr),
-                Tooltip(
-                  message: I18n.stopBackendOnExitHelp.tr,
-                  child: const Icon(Icons.help_outline, size: 16),
-                ).paddingOnly(left: 5),
-              ],
-            ),
+            icon: Icons.power_settings_new_rounded,
+            left: Text(I18n.stopBackendOnExit.tr),
+            description: I18n.stopBackendOnExitHelp.tr,
             right: const StopBackendOnExitSwitch(),
           ),
         if (PlatformUtils.isDesktop)
           SettingItem(
-            left: Row(
-              children: [
-                Text(I18n.launchAtStartup.tr),
-                Tooltip(
-                  message: I18n.launchAtStartupHelp.tr,
-                  child: const Icon(Icons.help_outline, size: 16),
-                ).paddingOnly(left: 5),
-              ],
-            ),
+            icon: Icons.rocket_launch_outlined,
+            left: Text(I18n.launchAtStartup.tr),
+            description: I18n.launchAtStartupHelp.tr,
             right: const LaunchAtStartupSwitch(),
           ),
         if (!PlatformUtils.isWeb)
           SettingItem(
-            left: Row(
-              children: [
-                Text(I18n.updateProxyUrl.tr),
-                Tooltip(
-                  message: I18n.updateProxyUrlHelp.tr,
-                  child: const Icon(Icons.help_outline, size: 16),
-                ).paddingOnly(left: 5),
-              ],
-            ),
+            icon: Icons.cloud_download_outlined,
+            left: Text(I18n.updateProxyUrl.tr),
+            description: I18n.updateProxyUrlHelp.tr,
             right: const UpdateProxyUrlField(),
           ),
         SettingItem(
+          icon: Icons.info_outline_rounded,
           left: Text('${I18n.currentVersion.tr}: ${GlobalVar.version}'),
           right: PlatformUtils.isWeb
               ? const SizedBox.shrink()

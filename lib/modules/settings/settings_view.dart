@@ -79,6 +79,7 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final fluent = resolveAppUiStyle() == AppUiStyle.fluent;
     final body = SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -86,20 +87,32 @@ class _SettingsViewState extends State<SettingsView> {
           final settingList = _buildSettingList(keyboardInset);
 
           if (!isWide) {
-            return settingList.paddingOnly(left: 8, right: 8, top: 8);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (fluent) _buildPageTitle(),
+                Expanded(child: settingList.paddingOnly(left: 8, right: 8)),
+              ],
+            );
           }
 
-          return Row(
-            // stretch：左侧导航卡填满整行高度。之前是 start +
-            // MainAxisSize.min，卡片只有内容高，下面留出一大块
-            // 裸露的 Acrylic，看起来像布局残破
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildPrimaryNav(),
-              const SizedBox(width: _layoutSpacing),
-              Expanded(child: settingList),
+              // 页面大标题（LLT/Win11 的 Settings 标题），占满整行宽度
+              if (fluent) _buildPageTitle(),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildPrimaryNav(),
+                    const SizedBox(width: 16),
+                    Expanded(child: settingList),
+                  ],
+                ).paddingOnly(left: 24, right: 24, bottom: 16),
+              ),
             ],
-          ).paddingOnly(left: 8, right: 8, top: 8);
+          );
         },
       ),
     );
@@ -242,50 +255,149 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  /// 页面大标题：28px 粗体，占满内容区宽度（LLT 的 "Settings"）。
+  Widget _buildPageTitle() {
+    final theme = Theme.of(context);
+    final p = FluentPalette.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+      child: Text(
+        I18n.setting.tr,
+        style: theme.textTheme.headlineSmall?.copyWith(
+          fontSize: 28,
+          fontWeight: FontWeight.w600,
+          color: p.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  /// 左侧分区导航：**单个容器**装所有分区项（LLT 风格）。
+  ///
+  /// 选中项是「左侧 3×20 蓝条 + 圆角高亮块」，与顶部导航栏的选中态一致。
   Widget _buildPrimaryNav() {
+    final theme = Theme.of(context);
+    final p = FluentPalette.of(context);
+    final accent = theme.colorScheme.primary;
+
     return SizedBox(
       width: _navWidth,
-      // 语义卡片：Windows 上是「卡片底 + 1px 描边、无阴影」，
-      // 且随 Row 的 stretch 撑满高度——不留裸露的材质底
       child: AppCard(
         variant: AppCardVariant.elevated,
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: List.generate(_sections.length, (index) {
             final isSelected = index == _selectedSectionIndex;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () => _scrollToSection(index),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: isSelected
-                        ? Theme.of(context)
-                            .colorScheme
-                            .secondaryContainer
-                            .withValues(alpha: 0.38)
-                        : Colors.transparent,
-                  ),
-                  child: Text(
-                    _sections[index].navTitleBuilder(),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w400,
-                        ),
+            return _SectionNavItem(
+              label: _sections[index].navTitleBuilder(),
+              selected: isSelected,
+              accent: accent,
+              textColor: isSelected ? p.textPrimary : p.textSecondary,
+              fill: isSelected ? p.rowHover : Colors.transparent,
+              onTap: () => _scrollToSection(index),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+}
+
+/// 分区导航项：左侧蓝条 + 圆角高亮块（与顶部导航栏同款选中态）。
+class _SectionNavItem extends StatefulWidget {
+  const _SectionNavItem({
+    required this.label,
+    required this.selected,
+    required this.accent,
+    required this.textColor,
+    required this.fill,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final Color accent;
+  final Color textColor;
+  final Color fill;
+  final VoidCallback onTap;
+
+  @override
+  State<_SectionNavItem> createState() => _SectionNavItemState();
+}
+
+class _SectionNavItemState extends State<_SectionNavItem> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final p = FluentPalette.of(context);
+    const anim = Duration(milliseconds: 160);
+
+    final fill = widget.selected
+        ? widget.fill
+        : (_hovering ? p.rowPressed : Colors.transparent);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: SizedBox(
+          height: 44,
+          child: Row(
+            children: [
+              // 左侧 3×20 蓝条
+              SizedBox(
+                width: 8,
+                child: AnimatedOpacity(
+                  duration: anim,
+                  opacity: widget.selected ? 1 : 0,
+                  child: Center(
+                    child: Container(
+                      width: 3,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: widget.accent,
+                        borderRadius: BorderRadius.circular(1.5),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            );
-          }),
+              Expanded(
+                child: AnimatedContainer(
+                  duration: anim,
+                  curve: Curves.easeOut,
+                  decoration: BoxDecoration(
+                    color: fill,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        widget.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: widget.textColor,
+                          fontWeight: widget.selected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
