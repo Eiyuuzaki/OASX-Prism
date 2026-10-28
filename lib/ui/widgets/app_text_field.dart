@@ -18,7 +18,12 @@ import 'package:oasx/ui/style.dart';
 /// ```
 ///
 /// 其它平台沿用 Material 的圆角填充风格。
-class AppTextField extends StatelessWidget {
+///
+/// 是 StatefulWidget 的原因：[focusNode] 未传时本组件要自建一个，且**必须
+/// 同时交给 TextFormField 与聚焦下划线动画**。若两处各自新建 FocusNode，
+/// 输入框聚焦的是它自己那个、动画看的是另一个，`hasFocus` 恒为 false，
+/// 聚焦下划线就永远不出现。
+class AppTextField extends StatefulWidget {
   /// 创建语义输入框。
   const AppTextField({
     super.key,
@@ -80,34 +85,61 @@ class AppTextField extends StatelessWidget {
   final FormFieldValidator<String>? validator;
   final String? initialValue;
 
+  @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  /// 调用方没传 focusNode 时由本组件持有（并负责释放）。
+  FocusNode? _ownedFocus;
+
+  FocusNode get _focusNode => widget.focusNode ?? (_ownedFocus ??= FocusNode());
+
+  @override
+  void didUpdateWidget(AppTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusNode != widget.focusNode) {
+      _ownedFocus?.dispose();
+      _ownedFocus = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ownedFocus?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final style = resolveAppUiStyle();
     final decoration = style == AppUiStyle.fluent
         ? _fluentDecoration(context)
-        : _materialDecoration(context, fillColor);
+        : _materialDecoration(context, widget.fillColor);
+
+    final controller = widget.controller;
+    final focusNode = _focusNode;
 
     // initialValue 与 controller 互斥，TextFormField 会断言检查
     final field = TextFormField(
       controller: controller,
       focusNode: focusNode,
-      initialValue: controller == null ? initialValue : null,
-      enabled: enabled,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      scrollPadding: scrollPadding ??
+      initialValue: controller == null ? widget.initialValue : null,
+      enabled: widget.enabled,
+      maxLines: widget.maxLines,
+      keyboardType: widget.keyboardType,
+      inputFormatters: widget.inputFormatters,
+      scrollPadding: widget.scrollPadding ??
           const EdgeInsets.only(left: 12, top: 12, right: 12, bottom: 24),
-      textInputAction: textInputAction,
-      obscureText: obscureText,
-      autofocus: autofocus,
-      readOnly: readOnly,
-      onTap: onTap,
-      onTapOutside: onTapOutside,
-      onEditingComplete: onEditingComplete,
-      onChanged: onChanged,
-      validator: validator,
+      textInputAction: widget.textInputAction,
+      obscureText: widget.obscureText,
+      autofocus: widget.autofocus,
+      readOnly: widget.readOnly,
+      onTap: widget.onTap,
+      onTapOutside: widget.onTapOutside,
+      onEditingComplete: widget.onEditingComplete,
+      onChanged: widget.onChanged,
+      validator: widget.validator,
       style: _textStyle(context),
       decoration: decoration,
     );
@@ -120,8 +152,8 @@ class AppTextField extends StatelessWidget {
     // 做 167ms 过渡。同时把 focusedBorder 的底部线设成透明（见
     // _fluentDecoration），避免两条线叠在一起。
     //
-    // 聚焦状态来自 FocusNode——调用方传了就用它，没传则由本组件
-    // 内部创建并负责释放（_AnimatedFocusUnderline 内部管理）。
+    // 聚焦状态来自上面那个**同一个** focusNode——这是下划线能出现的
+    // 前提，不能在这里另建节点。
     return _AnimatedFocusUnderline(
       focusNode: focusNode,
       child: field,
@@ -141,16 +173,16 @@ class AppTextField extends StatelessWidget {
     final radius = BorderRadius.circular(FluentRadius.control);
 
     return InputDecoration(
-      labelText: labelText,
-      helperText: helperText,
-      hintText: hintText,
-      errorText: errorText,
-      prefixIcon: prefixIcon,
-      suffixIcon: suffixIcon,
+      labelText: widget.labelText,
+      helperText: widget.helperText,
+      hintText: widget.hintText,
+      errorText: widget.errorText,
+      prefixIcon: widget.prefixIcon,
+      suffixIcon: widget.suffixIcon,
       filled: true,
       isDense: true,
       // WinUI 的输入框填充很浅，几乎贴近背景
-      fillColor: fillColor ?? (p.isDark ? p.layerAlt : p.card),
+      fillColor: widget.fillColor ?? (p.isDark ? p.layerAlt : p.card),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       prefixIconConstraints:
           const BoxConstraints(minWidth: 34, minHeight: 34),
@@ -199,12 +231,12 @@ class AppTextField extends StatelessWidget {
   InputDecoration _materialDecoration(BuildContext context, Color? fill) {
     final scheme = Theme.of(context).colorScheme;
     return InputDecoration(
-      labelText: labelText,
-      helperText: helperText,
-      hintText: hintText,
-      errorText: errorText,
-      prefixIcon: prefixIcon,
-      suffixIcon: suffixIcon,
+      labelText: widget.labelText,
+      helperText: widget.helperText,
+      hintText: widget.hintText,
+      errorText: widget.errorText,
+      prefixIcon: widget.prefixIcon,
+      suffixIcon: widget.suffixIcon,
       filled: true,
       fillColor: fill ??
           scheme.surfaceContainerHighest.withValues(alpha: 0.6),
@@ -310,13 +342,14 @@ class _FluentInputBorder extends InputBorder {
 
 /// 聚焦时从中间展开的强调色下划线（WinUI TextBox 的 focus underline）。
 ///
-/// [focusNode] 为空时内部自建一个并负责释放——这样调用方无需为了
-/// 拿到动画而额外传 focusNode。
+/// [focusNode] 由 `_AppTextFieldState` 统一持有（传进来的或它自建的），
+/// 本组件只订阅、不创建、不释放——保证与 `TextFormField` 看到的是同一个
+/// 节点。
 class _AnimatedFocusUnderline extends StatefulWidget {
-  const _AnimatedFocusUnderline({required this.child, this.focusNode});
+  const _AnimatedFocusUnderline({required this.child, required this.focusNode});
 
   final Widget child;
-  final FocusNode? focusNode;
+  final FocusNode focusNode;
 
   @override
   State<_AnimatedFocusUnderline> createState() =>
@@ -324,24 +357,18 @@ class _AnimatedFocusUnderline extends StatefulWidget {
 }
 
 class _AnimatedFocusUnderlineState extends State<_AnimatedFocusUnderline> {
-  FocusNode? _owned;
-
-  FocusNode get _node => widget.focusNode ?? (_owned ??= FocusNode());
-
   @override
   void initState() {
     super.initState();
-    _node.addListener(_onFocus);
+    widget.focusNode.addListener(_onFocus);
   }
 
   @override
   void didUpdateWidget(_AnimatedFocusUnderline oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.focusNode != widget.focusNode) {
-      oldWidget.focusNode?.removeListener(_onFocus);
-      _owned?.dispose();
-      _owned = null;
-      _node.addListener(_onFocus);
+      oldWidget.focusNode.removeListener(_onFocus);
+      widget.focusNode.addListener(_onFocus);
     }
   }
 
@@ -351,14 +378,13 @@ class _AnimatedFocusUnderlineState extends State<_AnimatedFocusUnderline> {
 
   @override
   void dispose() {
-    _node.removeListener(_onFocus);
-    _owned?.dispose();
+    widget.focusNode.removeListener(_onFocus);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final focused = _node.hasFocus;
+    final focused = widget.focusNode.hasFocus;
     return Stack(
       children: [
         widget.child,

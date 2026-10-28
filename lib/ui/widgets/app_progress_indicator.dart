@@ -44,8 +44,13 @@ class AppProgressIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (resolveAppUiStyle() != AppUiStyle.fluent) {
+      // 非 Fluent 平台直接用 Material 原生控件。
+      //
+      // **不要返回 `AppProgressIndicator.linear(...)`**：构造出来的仍是
+      // linear 实例，build 会再次进入这个分支，无限递归到栈溢出
+      // （Android / Web / Linux 上渲染线性进度条即崩溃）。
       return linear
-          ? AppProgressIndicator.linear(value: value)
+          ? LinearProgressIndicator(value: value)
           : SizedBox(
               width: size,
               height: size,

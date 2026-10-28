@@ -39,10 +39,19 @@ class AppChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (resolveAppUiStyle() != AppUiStyle.fluent) {
-      return Chip(
+      // 不能把点击语义塞进 `onDeleted`：那会在 chip 上渲染一个 ✕ 删除
+      // 图标，点它执行的却是 onTap——视觉（"可删除"）与行为（"切换"）
+      // 对不上。可点击就用 ActionChip，不可点击才用纯展示的 Chip。
+      if (onTap == null) {
+        return Chip(
+          label: Text(label),
+          avatar: icon == null ? null : Icon(icon, size: 16),
+        );
+      }
+      return ActionChip(
         label: Text(label),
         avatar: icon == null ? null : Icon(icon, size: 16),
-        onDeleted: onTap,
+        onPressed: onTap,
       );
     }
 
