@@ -1,4 +1,5 @@
-import 'package:flutter_nb_net/flutter_net.dart' show FormData, MultipartFile;
+import 'dart:convert';
+
 import 'config_transfer_models.dart';
 
 class ConfigTransferRequest {
@@ -62,13 +63,13 @@ class ConfigTransferApi {
       ConfigTransferRequest(
         'POST',
         '/config/import',
-        data: FormData.fromMap({
+        // **不用 multipart**：后端依赖里没有 python-multipart，且本功能
+        // 本来就只接受 UTF-8 JSON 对象。直接把文件内容作为 JSON 放进
+        // body，两边都少一层编码/解析。
+        data: {
           'name': name,
-          'file': MultipartFile.fromBytes(
-            document.bytes,
-            filename: document.fileName,
-          ),
-        }),
+          'payload': _decodeObject(document),
+        },
       ),
     );
     return ConfigTransferImportResult.fromJson(data);
@@ -85,17 +86,32 @@ class ConfigTransferApi {
       ConfigTransferRequest(
         'POST',
         '/config/task/import',
-        data: FormData.fromMap({
+        data: {
           'config_name': configName,
           'task_name': taskName,
-          'file': MultipartFile.fromBytes(
-            document.bytes,
-            filename: document.fileName,
-          ),
-        }),
+          'payload': _decodeObject(document),
+        },
       ),
     );
     return ConfigTransferImportResult.fromJson(data, task: true);
+  }
+
+  /// 把上传文件解析成 JSON 对象。
+  ///
+  /// `ConfigTransferDocument.parse` 已经校验过是「非空 UTF-8 JSON 对象」，
+  /// 这里再解一次以拿到结构化数据；若文件是导出文件，其中的
+  /// `config`/`task` 包装由后端拆解。
+  Map<String, dynamic> _decodeObject(ConfigTransferDocument document) {
+    try {
+      var text = utf8.decode(document.bytes);
+      if (text.startsWith('\uFEFF')) text = text.substring(1);
+      final data = jsonDecode(text);
+      if (data is Map<String, dynamic>) return data;
+      if (data is Map) return data.cast<String, dynamic>();
+    } on FormatException {
+      // 落到统一报错
+    }
+    throw const ConfigTransferException('文件不是有效的 UTF-8 JSON 配置对象。');
   }
 
   Future<ConfigTransferExportResult> export(

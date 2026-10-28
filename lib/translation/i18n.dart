@@ -169,5 +169,9 @@ class Messages extends Translations {
     I18n.resource_role_unknown: '未知角色',
     I18n.resource_vs_yesterday: '比昨日',
     I18n.resource_vs_earlier: '比此前',
+    I18n.resource_recent_days: '最近 {n} 天',
+    I18n.resource_total_days: '共 {n} 天数据',
+    I18n.resource_info: '信息',
+    I18n.resource_error: '错误',
   };
 }

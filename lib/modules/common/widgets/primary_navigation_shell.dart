@@ -200,7 +200,7 @@ class _PrimaryNavigationShellState extends State<PrimaryNavigationShell> {
       ),
       NavigationDestination(
         icon: const Icon(Icons.diamond_outlined),
-        label: '资产',
+        label: I18n.resource_title.tr,
       ),
       NavigationDestination(
         icon: const Icon(Icons.article_outlined),
@@ -267,7 +267,7 @@ class _PrimaryNavigationRail extends StatelessWidget {
         AppNavDestination(icon: Icons.home_rounded, label: I18n.home.tr),
         AppNavDestination(
             icon: Icons.bar_chart_rounded, label: I18n.homeStatsTab.tr),
-        AppNavDestination(icon: Icons.diamond_outlined, label: '资产'),
+        AppNavDestination(icon: Icons.diamond_outlined, label: I18n.resource_title.tr),
         AppNavDestination(icon: Icons.article_outlined, label: I18n.log.tr),
       ],
       bottomDestinations: [

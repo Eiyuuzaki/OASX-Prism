@@ -207,7 +207,7 @@ class _LogCenterPanelState extends State<LogCenterPanel> {
           _errorsOpened = _errorsOpened || _showErrors;
         });
       },
-      children: const [Text('信息'), Text('错误')],
+      children: [Text(I18n.resource_info.tr), Text(I18n.resource_error.tr)],
     );
   }
 

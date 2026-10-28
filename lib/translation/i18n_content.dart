@@ -1,4 +1,4 @@
-﻿class I18n {
+class I18n {
   static const configJsonImport = 'config_json_import';
   static const configJsonImportHelp = 'config_json_import_help';
   static const configJsonImportAction = 'config_json_import_action';
@@ -412,6 +412,10 @@
   static const String resource_role_hint = 'Data is stored per character. Switching accounts will not mix records.';
   static const String resource_role_unknown = 'Unknown character';
   static const String resource_vs_yesterday = 'vs yesterday';
-  static const String resource_vs_earlier = 'vs earlier',
+  static const String resource_vs_earlier = 'vs earlier';
+  static const String resource_recent_days = 'Last {n} days';
+  static const String resource_total_days = '{n} days of data';
+  static const String resource_info = 'Info';
+  static const String resource_error = 'Error',
       copy_success = 'Copy success';
 }
