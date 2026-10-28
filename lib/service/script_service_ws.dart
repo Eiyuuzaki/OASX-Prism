@@ -16,11 +16,18 @@ extension ScriptServiceWsX on ScriptService {
       listener: (mg) => wsListener(mg, name),
     );
     if (_detached || generation != _backendGeneration) return;
-    client.status.listen((wsStatus) {
+    // 取消上一条订阅，否则反复启动同一脚本会不断叠加监听
+    await _statusSubscriptions.remove(name)?.cancel();
+    _statusSubscriptions[name] = client.status.listen((wsStatus) {
       if (!_detached && generation == _backendGeneration) {
         scriptModelMap[name]?.update(state: wsStatus.scriptState);
       }
     });
+  }
+
+  /// 断开某个脚本的状态订阅（脚本被删除或整体 detach 时调用）。
+  Future<void> _cancelStatusSubscription(String name) async {
+    await _statusSubscriptions.remove(name)?.cancel();
   }
 
   Future<void> startScript(String name) async {

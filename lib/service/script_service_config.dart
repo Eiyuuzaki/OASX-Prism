@@ -49,6 +49,7 @@ extension ScriptServiceConfigX on ScriptService {
       return;
     }
     await wsService.close(normalized);
+    await _cancelStatusSubscription(normalized);
     if (Get.isRegistered<ScriptLogController>(tag: normalized)) {
       try {
         Get.delete<ScriptLogController>(tag: normalized, force: true);

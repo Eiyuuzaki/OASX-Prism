@@ -32,6 +32,13 @@ class ScriptService extends GetxService {
   int _backendGeneration = 0;
   Future<void>? _detachFuture;
 
+  /// 每个脚本一条 WS 状态订阅。
+  ///
+  /// `connectScript` 每次启动脚本 / 同步配置都会重连一次，若不在这里
+  /// 记住并取消旧订阅，监听会线性累积：WS 状态翻一次触发 N 次重复
+  /// `update`，客户端关闭后闭包还攥着旧状态。
+  final _statusSubscriptions = <String, StreamSubscription<dynamic>>{};
+
   bool get _shouldSkipBackendReload {
     return PlatformUtils.isWeb && !ApiClient().hasConfiguredBackendAddress;
   }
@@ -52,6 +59,11 @@ class ScriptService extends GetxService {
   /// Closing the client only detaches observers; tasks belong to the backend.
   Future<void> detach() {
     _detached = true;
+    // 断开所有脚本的状态订阅，避免闭包攥着已关闭客户端的旧状态
+    for (final sub in _statusSubscriptions.values) {
+      unawaited(sub.cancel());
+    }
+    _statusSubscriptions.clear();
     return _detachFuture ??= resetDashboardState();
   }
 
@@ -83,6 +95,8 @@ class ScriptService extends GetxService {
   void deleteScriptModel(String name) {
     if (!scriptModelMap.containsKey(name)) return;
     scriptModelMap.remove(name);
+    // 断开该脚本的状态订阅，避免 WS 关闭后仍有闭包持有已删除的模型
+    unawaited(_cancelStatusSubscription(name));
     wsService.close(name);
     autoScriptList.removeWhere((e) => e == name);
     scriptOrderList.removeWhere((e) => e == name);

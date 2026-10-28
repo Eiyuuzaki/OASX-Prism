@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:get/get.dart';
@@ -25,6 +26,9 @@ class ServerController extends GetxController with LogMixin {
   Shell? shell;
   var shellController = ShellLinesController();
 
+  /// `shellController.stream` 的订阅，onClose 里要取消。
+  StreamSubscription<dynamic>? _shellSubscription;
+
   @override
   void onInit() {
     rootPathServer.value =
@@ -33,7 +37,7 @@ class ServerController extends GetxController with LogMixin {
     autoLoginAfterDeploy.value =
         _storage.read(StorageKey.autoLoginAfterDeploy.name) ?? false;
     if (!ProfileService.isPreview) shell = getShell;
-    shellController.stream.listen(
+    _shellSubscription = shellController.stream.listen(
       (event) => addLog(!event.contains('INFO') ? 'INFO: $event' : event),
     );
     rootPathAuthenticated.value = authenticatePath(rootPathServer.value);
@@ -238,5 +242,20 @@ class ServerController extends GetxController with LogMixin {
       }
     }
     return false;
+  }
+
+  /// 离开 /server 页时释放资源。
+  ///
+  /// `routes.dart` 每次进这个页面都 `Get.put` 新实例，旧实例随路由被删，
+  /// 但此前没有 onClose：`shellController.stream` 的订阅一直挂着，
+  /// ShellLinesController 也没关——反复进出就持续泄漏，后端进程日志还会
+  /// 流向已经被关掉的旧控制器。
+  @override
+  void onClose() {
+    _shellSubscription?.cancel();
+    _shellSubscription = null;
+    shellController.close();
+    shell = null;
+    super.onClose();
   }
 }

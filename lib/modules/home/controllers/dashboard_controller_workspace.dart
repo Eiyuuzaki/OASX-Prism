@@ -353,9 +353,12 @@ extension HomeDashboardWorkspaceX on HomeDashboardController {
       sourceScript: source,
       taskName: normalizedTask,
       action: (target, resolvedTask) {
+        // **必须用闭包给的 target/resolvedTask**：这里是遍历所有联动脚本
+        // 逐个下发，用外层的 scriptName/taskName 会把 N 次请求全打在源脚本上
+        // （对照上面 updateTaskNextRun 的写法）。
         return ApiClient().syncScriptTaskNextRun(
-          scriptName,
-          taskName,
+          target,
+          resolvedTask,
           targetDt,
         );
       },

@@ -14,17 +14,33 @@ class UpdateInfoModel extends BaseNetModel {
     this.commit,
   });
   UpdateInfoModel.fromJson(dynamic json) {
+    // 后端在 updater 异常时会 `return None`（home_router），get_commit 拿不到
+    // origin 分支时也会返回一串 None。这些情况都会让下面那句 `!` 抛
+    // NoSuchMethodError/TypeError，整个更新弹窗直接报错。所以全部按空处理。
+    if (json is! Map) {
+      currentCommit = const [];
+      latestCommit = const [];
+      commit = const [];
+      return;
+    }
     isUpdate = json['is_update'];
     branch = json['branch'];
-    currentCommit = json['current_commit']!.cast<String>();
-    latestCommit = json['latest_commit']!.cast<String>();
-    // commit =
-    //      json['commit']!.map<List<String>>((dynamic e) => e.cast<String>() ).toList();
+    currentCommit = _asStringList(json['current_commit']);
+    latestCommit = _asStringList(json['latest_commit']);
+    commit = _asRows(json['commit']);
+  }
 
-    commit = [];
-    json['commit']!.forEach((e) {
-      commit!.add(e.cast<String>());
-    });
+  static List<String> _asStringList(dynamic value) {
+    if (value is! List) return const [];
+    return value.map((e) => e?.toString() ?? '').toList();
+  }
+
+  static List<List<String>> _asRows(dynamic value) {
+    if (value is! List) return const [];
+    return value
+        .whereType<List>()
+        .map((row) => row.map((e) => e?.toString() ?? '').toList())
+        .toList();
   }
 
   bool? isUpdate;
