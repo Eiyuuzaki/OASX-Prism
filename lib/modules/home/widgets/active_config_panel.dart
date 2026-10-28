@@ -131,7 +131,12 @@ class ActiveConfigPanel extends StatelessWidget {
         ),
       HomeWorkbenchTab.stats => const ScriptStatisticsPanel(),
       HomeWorkbenchTab.logs => LogCenterPanel(scriptName: script.name),
-      HomeWorkbenchTab.assets => const ResourceView(),
+      // 显式传脚本名 + key：切脚本时才会拿到新实例（const 无参写法会
+      // 因 identical 短路而不重建，页面停留在旧脚本的数据上）。
+      HomeWorkbenchTab.assets => ResourceView(
+          key: ValueKey('workbench-resource-${script.name}'),
+          scriptName: script.name,
+        ),
     };
   }
 
@@ -141,7 +146,7 @@ class ActiveConfigPanel extends StatelessWidget {
       HomeWorkbenchTab.tasks => I18n.homeTasksTab.tr,
       HomeWorkbenchTab.stats => I18n.homeStatsTab.tr,
       HomeWorkbenchTab.logs => I18n.log.tr,
-      HomeWorkbenchTab.assets => '资产',
+      HomeWorkbenchTab.assets => I18n.resource_title.tr,
     };
   }
 }

@@ -189,11 +189,24 @@ class HomeStatisticsController extends GetxController {
     return runs;
   }
 
+  /// 独立「统计」页是否正在显示。
+  ///
+  /// 统计/日志/资产拆成独立导航页后，`isStatsVisibleInCurrentLayout`（判断
+  /// 工作台那个 stats 页签有没有选中）在默认布局下恒为 false——独立页面
+  /// 不会改变工作台页签，于是绑定永远被门控拦下，`statistics.value` 恒为
+  /// null，整页只剩"无数据"占位。由 `StatisticsPage` 进出时设置这个标志，
+  /// 门控改为「独立页可见 **或** 工作台页签可见」。
+  final standalonePageVisible = false.obs;
+
+  /// 统计页当前是否应该持有绑定（独立页或工作台页签任一可见即算）。
+  bool get _isStatsSurfaceVisible =>
+      standalonePageVisible.value ||
+      dashboardController.isStatsVisibleInCurrentLayout;
+
   /// Rebinds the statistics transport to the currently visible script context.
   Future<void> syncStatisticsBinding() async {
     final scriptName = dashboardController.activeScriptName.value.trim();
-    if (!dashboardController.isStatsVisibleInCurrentLayout ||
-        scriptName.isEmpty) {
+    if (!_isStatsSurfaceVisible || scriptName.isEmpty) {
       await _resetBindingState(clearSelection: false);
       return;
     }
@@ -201,6 +214,13 @@ class HomeStatisticsController extends GetxController {
       return;
     }
     await _bootstrapForScript(scriptName);
+  }
+
+  /// 独立统计页进入/离开时调用（`StatisticsPage` 负责）。
+  void setStandalonePageVisible(bool visible) {
+    if (standalonePageVisible.value == visible) return;
+    standalonePageVisible.value = visible;
+    unawaited(syncStatisticsBinding());
   }
 
   /// Updates the selected date and reloads its data.
@@ -547,7 +567,7 @@ class HomeStatisticsController extends GetxController {
   /// Returns whether one bootstrap run is still active.
   bool _isBindingActive(int revision, String scriptName) {
     return revision == _bindingRevision &&
-        dashboardController.isStatsVisibleInCurrentLayout &&
+        _isStatsSurfaceVisible &&
         _boundScriptName == scriptName &&
         dashboardController.activeScriptName.value.trim() == scriptName;
   }
@@ -559,7 +579,7 @@ class HomeStatisticsController extends GetxController {
     String dateKey,
   ) {
     return revision == _statsRevision &&
-        dashboardController.isStatsVisibleInCurrentLayout &&
+        _isStatsSurfaceVisible &&
         _boundScriptName == scriptName &&
         selectedDateKey.value == dateKey;
   }

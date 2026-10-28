@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
+import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/ui/ui.dart';
 import 'package:oasx/views/resource/resource_view.dart';
 
@@ -21,13 +22,21 @@ class ResourcePage extends StatelessWidget {
       children: [
         Obx(
           () => AppPageHeader(
-            title: '资产',
+            title: I18n.resource_title.tr,
             description: dashboard.activeScriptName.value.isEmpty
                 ? '选择脚本后查看资产变化'
                 : '「${dashboard.activeScriptName.value}」的资产快照与变动',
           ),
         ),
-        const Expanded(child: ResourceView()),
+        // 必须跟着 activeScriptName 重建：用 Obx 订阅，并把脚本名作为 key，
+        // 切脚本时拿到全新的 ResourceView 实例（否则 identical 短路，
+        // 页面会一直停留在旧脚本的数据上）。
+        Expanded(
+          child: Obx(() {
+            final name = dashboard.activeScriptName.value;
+            return ResourceView(key: ValueKey('resource-$name'), scriptName: name);
+          }),
+        ),
       ],
     );
   }

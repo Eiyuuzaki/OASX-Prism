@@ -26,12 +26,21 @@ part './toolbar_view.dart';
 /// **只展示本地有图标的资源**：资源共 190+ 项，绝大多数是活动代币/过期材料，
 /// 全列出来没有意义。想增减展示项，往 `assets/currency/` 放/删图片即可。
 class ResourceView extends StatelessWidget {
-  const ResourceView({Key? key}) : super(key: key);
+  /// [scriptName] 为空时自动取当前激活脚本。
+  ///
+  /// **调用方应显式传入当前脚本名并带上 key**：本组件内部虽有 Obx 订阅
+  /// `activeScriptName`，但若调用点写成 `const ResourceView()`，切换脚本时
+  /// Flutter 认为是同一个实例（identical）直接跳过重建，订阅根本不会建立，
+  /// 页面会一直显示首次进入时那个脚本的数据。
+  const ResourceView({Key? key, this.scriptName}) : super(key: key);
+
+  final String? scriptName;
 
   @override
   Widget build(BuildContext context) {
     // 参考版架构：当前脚本名由 HomeDashboardController 维护
-    final tag = Get.find<HomeDashboardController>().activeScriptName.value;
+    final dashboard = Get.find<HomeDashboardController>();
+    final tag = scriptName ?? dashboard.activeScriptName.value;
     // 每个脚本一个独立控制器，切换脚本时互不干扰
     if (!Get.isRegistered<ResourceController>(tag: tag)) {
       Get.put(ResourceController(name: tag), tag: tag, permanent: true);

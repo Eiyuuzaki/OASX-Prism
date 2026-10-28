@@ -334,16 +334,23 @@ class ResourceController extends GetxController {
   /// * 数据 ≤ 7 天 → 固定展示全部（其实就只有这几天）
   /// * 数据 > 7 天 → 默认最近 7 天，并提供范围选择
   Future<void> showHistory(ResourceItemModel item) async {
+    final tag = 'history-$name';
     final span = await ApiClient().getResourceHistorySpan(
       name,
       roleKey: selectedRoleKey.value,
     );
 
-    if (!Get.isRegistered<ResourceHistoryController>(tag: 'history-$name')) {
-      Get.put(ResourceHistoryController(name: name, item: item),
-          tag: 'history-$name', permanent: false);
+    // **必须先删旧的再新建**：这个控制器注册在页面路由上，弹窗里的
+    // `GetX` 没传 `init`（不会被当成 creator），所以弹窗 pop 不会回收它，
+    // 其 onClose 里的自删逻辑也就永远等不到。若直接复用，第二次点其它
+    // 资产卡片会拿到上一次的 `item` 与 `points`（且不重新 load）——
+    // 标题是新的、曲线是旧的。
+    if (Get.isRegistered<ResourceHistoryController>(tag: tag)) {
+      Get.delete<ResourceHistoryController>(tag: tag, force: true);
     }
-    final controller = Get.find<ResourceHistoryController>(tag: 'history-$name');
+    Get.put(ResourceHistoryController(name: name, item: item),
+        tag: tag, permanent: false);
+    final controller = Get.find<ResourceHistoryController>(tag: tag);
     controller.span.value = span;
     controller.applyDefaultRange(span);
 
@@ -400,13 +407,13 @@ class ResourceHistoryController extends GetxController {
   }
 
   @override
+  @override
   void onClose() {
-    // 弹窗关掉就销毁，避免占着旧数据
-    Future.microtask(() {
-      if (Get.isRegistered<ResourceHistoryController>(tag: 'history-$name')) {
-        Get.delete<ResourceHistoryController>(tag: 'history-$name', force: true);
-      }
-    });
+    // 注意：**不要在这里删除自己**。本控制器是由 `showHistory` 通过
+    // `Get.put` 建在页面路由上的，而弹窗里的 `GetX` 不是 creator
+    // （没传 init），弹窗关闭不会走到这里；真走到这里时（比如显式
+    // Get.delete）再删自己会造成递归。销毁时机由 `showHistory`
+    // 在复用前显式 delete 保证。
     super.onClose();
   }
 

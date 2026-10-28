@@ -87,7 +87,7 @@ class _RangeBar extends StatelessWidget {
           for (final d in const [7, 30, 90])
             if (span == null || canPick || d <= (span.totalDays))
               AppChip(
-                label: '最近 $d 天',
+                label: I18n.resource_recent_days.tr.replaceAll('{n}', '$d'),
                 selected: controller.selectedDays.value == d &&
                     controller.customStart.value.isEmpty,
                 onTap: canPick || d == controller.selectedDays.value
@@ -106,7 +106,7 @@ class _RangeBar extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 4),
               child: Text(
-                '共 ${span.totalDays} 天数据',
+                I18n.resource_total_days.tr.replaceAll('{n}', '${span.totalDays}'),
                 style: theme.textTheme.labelSmall
                     ?.copyWith(color: theme.disabledColor),
               ),
