@@ -10,6 +10,7 @@ import 'package:oasx/modules/settings/index.dart';
 import 'package:oasx/service/acrylic_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/ui/ui.dart';
+import 'package:oasx/views/dashboard/dashboard_page.dart';
 import 'package:oasx/views/log/log_page.dart';
 import 'package:oasx/views/resource/resource_page.dart';
 import 'package:oasx/views/statistics/statistics_page.dart';
@@ -18,8 +19,12 @@ import 'package:oasx/views/statistics/statistics_page.dart';
 ///
 /// 索引即数组下标，改顺序时导航项与内容栈会一起跟着变，
 /// 不会出现"点了这项跳到那页"的错位。
+///
+/// 顺序按「看 → 管」排列：仪表盘是只读速览，放第一位（启动默认页）；
+/// 工作台是需要操作的管理界面，排在其后。
 const List<String> _kRouteOrder = [
-  '/home',
+  '/dashboard',
+  '/workbench',
   '/statistics',
   '/resource',
   '/log',
@@ -191,8 +196,12 @@ class _PrimaryNavigationShellState extends State<PrimaryNavigationShell> {
   List<Widget> _destinations() {
     return [
       NavigationDestination(
+        icon: const Icon(Icons.dashboard_outlined),
+        label: I18n.dashboard.tr,
+      ),
+      NavigationDestination(
         icon: const Icon(Icons.home_rounded),
-        label: I18n.home.tr,
+        label: I18n.workbench.tr,
       ),
       NavigationDestination(
         icon: const Icon(Icons.bar_chart_rounded),
@@ -229,11 +238,12 @@ class _PrimaryNavigationContent extends StatelessWidget {
     return IndexedStack(
       index: selectedIndex,
       children: [
-        _lazy(0, const HomeView(standalone: false)),
-        _lazy(1, const StatisticsPage()),
-        _lazy(2, const ResourcePage()),
-        _lazy(3, const LogPage()),
-        _lazy(4, const SettingsView(standalone: false)),
+        _lazy(0, const DashboardPage()),
+        _lazy(1, const HomeView(standalone: false)),
+        _lazy(2, const StatisticsPage()),
+        _lazy(3, const ResourcePage()),
+        _lazy(4, const LogPage()),
+        _lazy(5, const SettingsView(standalone: false)),
       ],
     );
   }
@@ -264,7 +274,9 @@ class _PrimaryNavigationRail extends StatelessWidget {
       selectedIndex: selectedIndex,
       onSelected: onSelected,
       destinations: [
-        AppNavDestination(icon: Icons.home_rounded, label: I18n.home.tr),
+        AppNavDestination(
+            icon: Icons.dashboard_outlined, label: I18n.dashboard.tr),
+        AppNavDestination(icon: Icons.home_rounded, label: I18n.workbench.tr),
         AppNavDestination(
             icon: Icons.bar_chart_rounded, label: I18n.homeStatsTab.tr),
         AppNavDestination(icon: Icons.diamond_outlined, label: I18n.resource_title.tr),

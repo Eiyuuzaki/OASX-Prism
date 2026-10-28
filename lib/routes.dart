@@ -6,12 +6,22 @@ import 'package:oasx/modules/home/home_binding.dart';
 import 'package:oasx/modules/server/index.dart';
 
 class Routes {
-  static const initial = '/home';
+  static const initial = '/dashboard';
 
   static final routes = [
     GetPage(
+      name: '/dashboard',
+      page: () => _buildPrimaryPage('/dashboard'),
+      binding: HomeBinding(),
+    ),
+    GetPage(
+      name: '/workbench',
+      page: () => _buildPrimaryPage('/workbench'),
+      binding: HomeBinding(),
+    ),
+    GetPage(
       name: '/home',
-      page: () => _buildPrimaryPage('/home'),
+      page: () => _buildPrimaryPage('/workbench'),
       binding: HomeBinding(),
     ),
     GetPage(

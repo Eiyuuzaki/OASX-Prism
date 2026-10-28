@@ -418,4 +418,22 @@ class I18n {
   static const String resource_info = 'Info';
   static const String resource_error = 'Error',
       copy_success = 'Copy success';
+
+  // ---- 仪表盘（Dashboard）----
+  static const String dashboard = 'Dashboard';
+  static const String workbench = 'Workbench';
+  static const String dashboard_schedule = 'Scheduler';
+  static const String dashboard_today = 'Today';
+  static const String dashboard_running = 'Running';
+  static const String dashboard_idle = 'Idle';
+  static const String dashboard_no_task = 'No scheduled tasks';
+  static const String dashboard_no_config = 'No config yet. Create one in the workbench first.';
+  static const String dashboard_today_empty = 'Nothing ran today';
+  static const String dashboard_runtime = 'Runtime';
+  static const String dashboard_battles = 'Battles';
+  static const String dashboard_task_runs = 'Task runs';
+  static const String dashboard_assets_empty = 'No asset snapshot yet';
+  static const String dashboard_log_tail = 'Recent log';
+  static const String dashboard_view_all = 'View all';
+  static const String dashboard_log_hint = 'Open the Log page for the full stream.';
 }

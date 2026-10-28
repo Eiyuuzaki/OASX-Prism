@@ -173,5 +173,22 @@ class Messages extends Translations {
     I18n.resource_total_days: '共 {n} 天数据',
     I18n.resource_info: '信息',
     I18n.resource_error: '错误',
+    // 仪表盘（Dashboard）
+    I18n.dashboard: '仪表盘',
+    I18n.workbench: '工作台',
+    I18n.dashboard_schedule: '调度器',
+    I18n.dashboard_today: '今日概览',
+    I18n.dashboard_running: '运行中',
+    I18n.dashboard_idle: '空闲',
+    I18n.dashboard_no_task: '暂无排程任务',
+    I18n.dashboard_no_config: '还没有配置。请先在工作台创建一个。',
+    I18n.dashboard_today_empty: '今日尚未运行',
+    I18n.dashboard_runtime: '运行时长',
+    I18n.dashboard_battles: '战斗次数',
+    I18n.dashboard_task_runs: '任务轮次',
+    I18n.dashboard_assets_empty: '还没有资产快照',
+    I18n.dashboard_log_tail: '实时日志',
+    I18n.dashboard_view_all: '查看全部',
+    I18n.dashboard_log_hint: '打开日志页可查看完整输出。',
   };
 }

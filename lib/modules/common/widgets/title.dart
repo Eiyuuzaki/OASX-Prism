@@ -9,7 +9,22 @@ Widget getTitle(BuildContext context, {String? routePath}) {
   return switch (resolvedRoutePath) {
     '/settings' => const SettingTitle(),
     '/server' => const ServerTitle(),
-    _ => const HomeTitleBar(),
+    // 主页标题栏的文字按当前页变化：导航栏选中项会收起文字（WinUI 紧凑
+    // 导航的既定行为），标题栏是用户唯一能确认"我在哪一页"的地方，
+    // 写死「主页」会让仪表盘/工作台/统计等页面全都显示成主页。
+    _ => HomeTitleBar(label: _pageLabelFor(resolvedRoutePath)),
+  };
+}
+
+/// 路由 → 标题文字。
+String _pageLabelFor(String routePath) {
+  return switch (routePath) {
+    '/dashboard' => I18n.dashboard.tr,
+    '/workbench' || '/home' => I18n.workbench.tr,
+    '/statistics' => I18n.homeStatsTab.tr,
+    '/resource' => I18n.resource_title.tr,
+    '/log' => I18n.log.tr,
+    _ => I18n.home.tr,
   };
 }
 
@@ -32,7 +47,10 @@ String _resolveRoutePath(BuildContext context, {String? routePath}) {
 }
 
 class HomeTitleBar extends StatelessWidget {
-  const HomeTitleBar({super.key});
+  const HomeTitleBar({super.key, this.label});
+
+  /// 标题文字；为空时回落到「主页」。
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +61,11 @@ class HomeTitleBar extends StatelessWidget {
         children: [
           Image.asset('assets/images/Icon-app.png', height: 30, width: 30),
           const SizedBox(width: 14),
-          Flexible(child: _TitleLabel(text: 'OASX / ${I18n.home.tr}')),
+          Flexible(
+            child: _TitleLabel(
+              text: 'OASX / ${label ?? I18n.home.tr}',
+            ),
+          ),
         ],
       ),
     );
