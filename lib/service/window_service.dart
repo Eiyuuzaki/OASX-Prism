@@ -321,7 +321,15 @@ class WindowService extends GetxService with WindowListener {
 
   void _reapplyMaterial() {
     if (!PlatformUtils.isDesktop) return;
-    unawaited(AcrylicService.reapply());
+    // **必须传当前主题的明暗**：`reapply({bool? dark})` 内部是
+    // `dark ?? false`，不传就按浅色重发 tint（0x8CFFFFFF）并把 DWM 的
+    // USE_IMMERSIVE_DARK_MODE 置 0——深色主题下每次窗口获得焦点（启动
+    // 首次聚焦、alt+tab 切回）材质就被刷成浅色，表现为深色 UI 配亮白材质。
+    // 托盘那条路径（SystemTrayService._reapplyMaterial）一直传对了，这里漏了。
+    final dark = Get.isRegistered<ThemeService>()
+        ? Get.find<ThemeService>().isDarkMode
+        : false;
+    unawaited(AcrylicService.reapply(dark: dark));
   }
 
   @override

@@ -70,20 +70,28 @@ class AcrylicService {
     // 往往跑在窗口真正显示之前。之前用固定延迟补 2 次，赶不上就永久
     // 失效——表现为"第一次启动没材质、重启又有"的时好时坏。
     //
-    // 改成**轮询直到确认生效**：每 200ms 检查 DWM 属性是否到位，
+    // 改成**轮询直到确认生效**：每 200ms 检查玻璃边距/透明标志是否到位，
     // 成功即停；最多 25 次（约 5 秒）。只在首次启动跑，避免每次聚焦
     // 都重设导致闪烁。
     if (!_settled) {
       _settled = true;
-      _scheduleStartupRetry(dark: useDark);
+      _scheduleStartupRetry(dark: useDark, darkResolver: darkResolver);
     }
   }
+
+  /// 供 [applyEffect] 的调用方注入"当前明暗"的实时取值。
+  ///
+  /// 启动期可能持续 5 秒，期间用户切主题的话，补设不该把材质刷回旧明暗。
+  static bool Function()? darkResolver;
 
   /// 首次启动是否已经补设过（避免每次聚焦重复补设导致闪烁）。
   static bool _settled = false;
 
-  /// 启动期轮询补设，直到 DWM 确认材质已生效。
-  static void _scheduleStartupRetry({required bool dark}) {
+  /// 启动期轮询补设，直到确认材质已生效。
+  ///
+  /// [darkResolver] 每次重设前重新求值明暗：启动后 5 秒内用户可能正好
+  /// 切了主题，用启动那一刻的固定值会把材质刷回旧明暗。
+  static void _scheduleStartupRetry({required bool dark, bool Function()? darkResolver}) {
     var attempts = 0;
     const maxAttempts = 25;
     const interval = Duration(milliseconds: 200);
@@ -92,7 +100,7 @@ class AcrylicService {
       if (!_supported || !_pluginReady) return;
 
       attempts++;
-      if (_isBackdropSettled()) {
+      if (_isMaterialSettled()) {
         debugPrint('AcrylicService: 材质确认生效（第 $attempts 次检查）');
         return;
       }
@@ -101,7 +109,8 @@ class AcrylicService {
         return;
       }
 
-      _reapplySameEffect(dark: dark).then((_) {
+      final current = darkResolver?.call() ?? dark;
+      _reapplySameEffect(dark: current).then((_) {
         Future.delayed(interval, tick);
       });
     }
@@ -109,10 +118,34 @@ class AcrylicService {
     Future.delayed(interval, tick);
   }
 
+  /// 检查材质是否已生效。
+  ///
+  /// **不能查 DWM 的 SYSTEMBACKDROP_TYPE(38)**：主路径（Acrylic）走的是
+  /// accent 策略 + MARGINS，从不写属性 38（fallback 写的是 4），拿它做
+  /// 判据会恒为 false——轮询永远"没生效"，固定空转到 25 次上限（约 5 秒），
+  /// 期间还会反复重设材质。
+  ///
+  /// 真正可靠的判据是**玻璃边距已经扩到整个客户区**：
+  /// `DwmExtendFrameIntoClientArea(MARGINS{-1})` 成功时，DWM 会把
+  /// 客户区标记为已扩展（属性 37 = DWMWA_EXTENDED_FRAME_BOUNDS 之外的
+  /// 非零边距）。这里用"透明背景标志 + 窗口存在"作为轻量判据，
+  /// 因为 `transparentBackground` 只在材质链路成功后才置 true。
+  static bool _isMaterialSettled() {
+    if (!Platform.isWindows) return false;
+    if (!transparentBackground) return false;
+    try {
+      final user32 = DynamicLibrary.open('user32.dll');
+      return _findOwnWindow(user32) != 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// 检查 DWM 的 backdrop 属性是否已是目标值（3 = Acrylic）。
   ///
-  /// 只确认**属性设置成功**，不代表画面已渲染；但属性丢失是启动失败
-  /// 的主要形态，能覆盖绝大多数情况。
+  /// 仅用于**诊断**（材质排查脚本），不要拿它当启动补设的判据，原因见
+  /// [_isMaterialSettled]。
+  // ignore: unused_element
   static bool _isBackdropSettled() {
     if (!Platform.isWindows) return false;
     try {

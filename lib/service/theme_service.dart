@@ -58,11 +58,14 @@ class ThemeService extends GetxService {
       case AppThemeMode.dark:
         _dark.value = true;
       case AppThemeMode.system:
-        // 系统亮度从 MediaQuery 取；拿不到 context 时按浅色处理
-        final ctx = Get.context;
-        final platformDark = ctx != null &&
-            MediaQuery.maybePlatformBrightnessOf(ctx) == Brightness.dark;
-        _dark.value = platformDark;
+        // **不要从 MediaQuery 取系统亮度**：`applyEffect` 在 `runApp` 之前
+        // 就执行，那一刻 `Get.context` 还是 null，只能按浅色处理——结果是
+        // "系统深色 + 跟随系统"启动时深色界面配浅色材质。
+        // `platformDispatcher.platformBrightness` 不依赖 context，启动期和
+        // 运行期都可用。
+        final brightness =
+            WidgetsBinding.instance.platformDispatcher.platformBrightness;
+        _dark.value = brightness == Brightness.dark;
     }
   }
 

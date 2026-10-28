@@ -45,8 +45,38 @@ void main() async {
   );
 }
 
-class OASXApp extends StatelessWidget {
+class OASXApp extends StatefulWidget {
   const OASXApp({super.key});
+
+  @override
+  State<OASXApp> createState() => _OASXAppState();
+}
+
+class _OASXAppState extends State<OASXApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    // 「跟随系统」模式下，系统亮暗切换要同步刷新主题与材质。
+    // ThemeService.onPlatformBrightnessChanged 之前没有任何调用者，
+    // 属于死代码——用户切系统主题后界面和材质都不会跟。
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    super.didChangePlatformBrightness();
+    if (!Get.isRegistered<ThemeService>()) return;
+    final themeService = Get.find<ThemeService>();
+    themeService.onPlatformBrightnessChanged();
+    // 材质的 dark 分支也要跟着切（mica/acrylic 的 tint 与深色标志位）
+    AcrylicService.refresh(dark: themeService.isDarkMode);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +138,14 @@ Future<void> initService() async {
   // 材质设置必须在 window_manager 完成所有窗口样式操作**之后**，
   // 否则会被 window_manager 的后续调用覆盖掉（表现为调用成功但无效果）。
   // 材质默认开启（Mica，开销低），没有开关需要读取。
+  //
+  // 注入实时明暗取值：启动补设轮询最长跑 5 秒，期间用户可能切主题，
+  // 用启动那一刻的固定值会把材质刷回旧明暗。
+  AcrylicService.darkResolver = () {
+    return Get.isRegistered<ThemeService>()
+        ? Get.find<ThemeService>().isDarkMode
+        : false;
+  };
   await AcrylicService.applyEffect(
     dark: Get.find<ThemeService>().isDarkMode,
   );
