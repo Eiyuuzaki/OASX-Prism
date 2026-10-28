@@ -87,12 +87,22 @@ class AcrylicService {
   /// 首次启动是否已经补设过（避免每次聚焦重复补设导致闪烁）。
   static bool _settled = false;
 
-  /// 启动期轮询补设，直到确认材质已生效。
+  /// 启动期轮询补设。
   ///
-  /// [darkResolver] 每次重设前重新求值明暗：启动后 5 秒内用户可能正好
+  /// **不要用"是否已生效"做提前退出的判据**。窗口显示之前 DWM 不会处理
+  /// 合成属性，首次 `applyEffect` 往往落空；真正让材质出现的是**窗口显示
+  /// 之后的重设**（重设会重走 accent 策略，等于给 DWM 一次重绘机会）。
+  /// 之前用 `transparentBackground` 当判据——它在 applyEffect 返回时就已经
+  /// 被乐观置 true，于是第一次检查就通过、24 次重设一次都没跑，材质再
+  /// 也没出来。同理也不能查 DWM 属性 38（Acrylic 主路径从不写它）。
+  ///
+  /// 所以这里就是**无条件补设若干次**，覆盖窗口显示的时机窗口。
+  ///
+  /// [darkResolver] 每次重设前重新求值明暗：启动后几秒内用户可能正好
   /// 切了主题，用启动那一刻的固定值会把材质刷回旧明暗。
   static void _scheduleStartupRetry({required bool dark, bool Function()? darkResolver}) {
     var attempts = 0;
+    // 25 次 × 200ms ≈ 5 秒，足够覆盖 flutter 首帧 + 窗口真正显示
     const maxAttempts = 25;
     const interval = Duration(milliseconds: 200);
 
@@ -100,12 +110,8 @@ class AcrylicService {
       if (!_supported || !_pluginReady) return;
 
       attempts++;
-      if (_isMaterialSettled()) {
-        debugPrint('AcrylicService: 材质确认生效（第 $attempts 次检查）');
-        return;
-      }
-      if (attempts >= maxAttempts) {
-        debugPrint('AcrylicService: 启动补设达上限，材质可能未生效');
+      if (attempts > maxAttempts) {
+        debugPrint('AcrylicService: 启动补设结束（$maxAttempts 次）');
         return;
       }
 
@@ -120,16 +126,15 @@ class AcrylicService {
 
   /// 检查材质是否已生效。
   ///
-  /// **不能查 DWM 的 SYSTEMBACKDROP_TYPE(38)**：主路径（Acrylic）走的是
-  /// accent 策略 + MARGINS，从不写属性 38（fallback 写的是 4），拿它做
-  /// 判据会恒为 false——轮询永远"没生效"，固定空转到 25 次上限（约 5 秒），
-  /// 期间还会反复重设材质。
+  /// **这个判据不可靠，不要拿它提前退出启动补设**（踩过两次）：
   ///
-  /// 真正可靠的判据是**玻璃边距已经扩到整个客户区**：
-  /// `DwmExtendFrameIntoClientArea(MARGINS{-1})` 成功时，DWM 会把
-  /// 客户区标记为已扩展（属性 37 = DWMWA_EXTENDED_FRAME_BOUNDS 之外的
-  /// 非零边距）。这里用"透明背景标志 + 窗口存在"作为轻量判据，
-  /// 因为 `transparentBackground` 只在材质链路成功后才置 true。
+  /// 1. 不能查 DWM 的 `SYSTEMBACKDROP_TYPE(38)`：Acrylic 主路径走 accent
+  ///    策略 + MARGINS，从不写该属性（fallback 写的是 4），判据恒 false。
+  /// 2. 不能查 `transparentBackground`：它在 `applyEffect` 返回时就被乐观
+  ///    置 true，窗口还没显示就已经"通过"，补设一次都不跑，材质再不出来。
+  ///
+  /// 保留它只作诊断用途。
+  // ignore: unused_element
   static bool _isMaterialSettled() {
     if (!Platform.isWindows) return false;
     if (!transparentBackground) return false;
